@@ -4,7 +4,27 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Human Time Calculator — The Price of a Decade</title>
   <meta name="description" content="Translate money into the one currency you cannot replace: your time.">
-  <link rel="stylesheet" href="/static/site.css?v=20261004-4">
+  <link rel="stylesheet" href="/static/site.css?v=20261004-6">
+
+  <style>
+    .decade-benchmark{margin-top:1.25rem;padding:1.35rem 1.4rem}
+    .decade-benchmark-head{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:1.5rem;align-items:start}
+    .decade-benchmark h2{margin:.2rem 0 .55rem;font-size:clamp(1.55rem,3vw,2.45rem);line-height:1.02}
+    .decade-benchmark h2 em{font-style:italic}
+    .decade-benchmark-copy{max-width:760px}
+    .decade-benchmark-copy p:last-child{margin-bottom:0}
+    .decade-benchmark-result{border-left:1px solid rgba(214,176,93,.45);padding-left:1.25rem}
+    .decade-main-value{font-size:clamp(2rem,4.2vw,3.5rem);font-weight:800;line-height:.95;margin:.35rem 0 .2rem}
+    .decade-main-label{font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;opacity:.72}
+    .decade-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:1rem}
+    .decade-mini{padding:.75rem .8rem;border:1px solid rgba(255,255,255,.12);border-radius:10px}
+    .decade-mini strong{display:block;font-size:1.05rem}
+    .decade-mini span{display:block;font-size:.74rem;opacity:.68;margin-top:.15rem}
+    .decade-benchmark details{margin-top:1rem}
+    .decade-benchmark-note{font-size:.78rem;opacity:.68;margin-top:.8rem}
+    @media(max-width:900px){.decade-benchmark-head{grid-template-columns:1fr}.decade-benchmark-result{border-left:0;border-top:1px solid rgba(214,176,93,.35);padding-left:0;padding-top:1rem}}
+    @media(max-width:560px){.decade-mini-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
+  </style>
 </head>
 <body class="site-body">
 <header class="topbar"><a class="brand" href="/">THE PRICE OF A DECADE</a><span class="navtag">HUMAN TIME CALCULATOR</span></header>
@@ -62,8 +82,41 @@
         <h2>PUBLIC MONEY,<br><em>IN YOUR TIME.</em></h2>
         <p>Quantified federal announcements. Tap one and your main result updates instantly.</p>
       </div>
+      <div class="public-manual">
+        <label for="publicAmount" class="public-manual-label">ENTER ANOTHER NATIONAL AMOUNT</label>
+        <div class="public-manual-row">
+          <div class="money public-money-input"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000" inputmode="decimal"></div>
+          <button type="button" id="translateBtn" class="ghost-button public-manual-button">TRANSLATE</button>
+        </div>
+        <div id="publicManualStatus" class="public-manual-status">Enter a national amount or choose an announcement below.</div>
+      </div>
       <div id="spendingFeed" class="feed commitment-feed public-money-scroll"><div class="feed-loading">Loading quantified announcements…</div></div>
     </section>
+  </section>
+
+  <section class="decade-benchmark panel" aria-live="polite">
+    <div class="decade-benchmark-head">
+      <div class="decade-benchmark-copy">
+        <p class="eyebrow">2015–2025 · THE PRICE OF A DECADE</p>
+        <h2>WHAT DID THE DECADE<br><em>COST YOU IN TIME?</em></h2>
+        <p>This standardized benchmark isolates the cumulative price-level pressure of the decade and converts it into your productive time using the household profile above.</p>
+        <p class="decade-benchmark-note">It is a price-level benchmark, not a grand total of taxes, housing, debt or public spending. Those categories overlap and are intentionally kept separate in the book's methodology.</p>
+      </div>
+      <div class="decade-benchmark-result">
+        <p class="result-kicker">STANDARDIZED CUMULATIVE PRICE-LEVEL BURDEN</p>
+        <div class="decade-main-value" id="decadeHours">—</div>
+        <div class="decade-main-label">productive hours</div>
+        <div class="decade-mini-grid">
+          <div class="decade-mini"><strong id="decadeDays">—</strong><span>8-hour workdays</span></div>
+          <div class="decade-mini"><strong id="decadeWeeks">—</strong><span>workweeks</span></div>
+          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>benchmark dollars</span></div>
+        </div>
+        <details>
+          <summary>SHOW BENCHMARK MATH</summary>
+          <div id="decadeMath" class="math-detail">Calculate your household profile above to see the decade benchmark.</div>
+        </details>
+      </div>
+    </div>
   </section>
 
   <section class="comparison-section panel" aria-live="polite">
@@ -94,10 +147,6 @@
     </div>
   </section>
 
-  <section class="spending panel">
-    <div><p class="section-label">PUBLIC SPENDING TRANSLATOR</p><h2>WHAT WOULD AN EQUAL SHARE COST YOU IN TIME?</h2><p>Enter a national program or commitment amount. The calculator first divides it by the current equal-share tax-filer denominator, then converts that illustrative share into your productive time.</p></div>
-    <div class="spend-input"><label>National program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE MY SHARE TO HUMAN TIME</button><div id="selectedAnnouncement" class="selected-announcement" hidden></div><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
-  </section>
 </main>
 <footer><span>Time is the currency. Money is only the accounting layer.</span><span>PriceOfADecade.com/calculator</span></footer>
 <script>
@@ -122,6 +171,36 @@
   const q = id => document.getElementById(id);
   const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(Number(n)||0);
   const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(Number(n)||0);
+
+  // Statistics Canada anchors used by the book's 2015–2025 audit.
+  const DECADE_CPI = [126.6,128.4,130.4,133.4,136.0,137.0,141.6,151.2,157.1,160.9,164.2];
+  const SHS_2015_AVG_GOODS_SERVICES = 60516;
+  const SHS_2015_AVG_HOUSEHOLD_SIZE = 2.48;
+
+  function updateDecadeBenchmark(){
+    const hoursEl=q('decadeHours');
+    if(!hoursEl) return;
+    if(!(currentHTV>0)){
+      hoursEl.textContent='—'; q('decadeDays').textContent='—'; q('decadeWeeks').textContent='—'; q('decadeDollars').textContent='—';
+      q('decadeMath').textContent='Calculate your household profile above to see the decade benchmark.';
+      return;
+    }
+    const householdSize=Math.max(1,Number(q('household').value||1));
+    const hpw=Math.max(1,Number(q('hours').value||40));
+    const scaled2015Basket=(SHS_2015_AVG_GOODS_SERVICES/SHS_2015_AVG_HOUSEHOLD_SIZE)*householdSize;
+    const base=DECADE_CPI[0];
+    let cumulativeExtra=0;
+    for(let i=1;i<DECADE_CPI.length;i++) cumulativeExtra += scaled2015Basket*((DECADE_CPI[i]/base)-1);
+    const hours=cumulativeExtra/currentHTV;
+    const days=hours/8;
+    const weeks=hours/hpw;
+    hoursEl.textContent=num(hours);
+    q('decadeDays').textContent=num(days);
+    q('decadeWeeks').textContent=num(weeks);
+    q('decadeDollars').textContent=money(cumulativeExtra);
+    const endpoint=((DECADE_CPI[DECADE_CPI.length-1]/base)-1)*100;
+    q('decadeMath').innerHTML=`<p><b>Audit period:</b> 2015–2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level burden:</b> for each year 2016–2025, the benchmark basket is repriced using that year's annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(cumulativeExtra)}</b>.</p><p><b>Your time translation:</b> ${money(cumulativeExtra)} ÷ ${money(currentHTV)}/productive hour = <b>${num(hours)} hours</b>.</p><p>This isolates price-level pressure only. It does not subtract wage gains or add overlapping tax, housing, interest, debt or public-spending burdens.</p>`;
+  }
 
   function payload(){
     return {
@@ -155,8 +234,9 @@
       q('hoursResult').textContent=num(d.cost_hours); q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
       let tax=''; if(d.tax_detail){ tax=`<p><b>Estimated 2026 deductions:</b> ${money(d.tax_detail.total)} — federal tax ${money(d.tax_detail.federal)}, ${d.province} tax ${money(d.tax_detail.provincial)}, CPP/QPP + EI/QPIP ${money(d.tax_detail.payroll)}.</p>`; }
       q('mathDetail').innerHTML=`<p><b>Annual productive hours:</b> ${num(d.annual_productive_hours)}</p><p><b>Estimated/entered disposable income:</b> ${money(d.disposable_household_income)}</p><p><b>Human Time Value:</b> ${money(d.disposable_household_income)} ÷ ${num(d.annual_productive_hours)} = <b>${money(d.human_time_value)}/hour</b></p><p><b>Time price:</b> ${money(d.economic_cost)} ÷ ${money(d.human_time_value)} = <b>${num(d.cost_hours)} hours</b></p>${tax}<p>${d.assumption}</p>`;
-      translatePublic();
+      updatePublicManualPreview();
       refreshCommitmentResults();
+      updateDecadeBenchmark();
       updateIncomeComparison(d.economic_cost);
     } catch(err){ if(mySeq===calcSeq && showErrors) q('formError').textContent=err.message; }
   }
@@ -281,17 +361,24 @@
     return {share,hours,workdays,workweeks};
   }
 
-  function translatePublic(){
+  function updatePublicManualPreview(){
+    const status=q('publicManualStatus');
+    if(!status) return;
     const amount=Number(q('publicAmount').value||0);
-    if(!currentHTV){q('publicResult').textContent='Calculate your Human Time Value first.';return;}
+    if(!(amount>0)){
+      status.textContent='Enter a national amount or choose an announcement below.';
+      return;
+    }
+    if(!currentHTV){
+      status.textContent='Calculate your Human Time Value first.';
+      return;
+    }
     const m=translatedPublicMetrics(amount);
-    const aggregateHours=amount/currentHTV;
-    const aggregateWorkYears=aggregateHours/2000;
-    q('publicResult').innerHTML=`<b>National amount:</b> ${money(amount)}.<br><b>Your equal-share illustration:</b> ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = <b>${money(m.share)}</b>.<br><b>Your time equivalent:</b> ${money(m.share)} ÷ ${money(currentHTV)}/hour = <b>${num(m.hours)} productive hours</b>, <b>${num(m.workdays)} 8-hour workdays</b>, or <b>${num(m.workweeks)} workweeks</b>.<br><b>National resource scale at your time value:</b> ${num(aggregateHours)} productive hours, or about ${num(aggregateWorkYears)} 2,000-hour working years. <span class="scale-note">Methodology: equal allocation across ${publicCostDenominatorLabel}. This is an analytical illustration of public-resource scale, not a claim that this amount appears on your personal tax bill.</span>`;
+    status.innerHTML=`Equal-share illustration: <b>${money(m.share)}</b> · <b>${num(m.hours)} productive hours</b> <span>(${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers)</span>`;
   }
   async function applyPublicToMain(amount, title='Custom public amount'){
     if(!currentHTV){
-      q('publicResult').textContent='Calculate your Human Time Value first.';
+      q('publicManualStatus').textContent='Calculate your Human Time Value first.';
       return;
     }
     const m=translatedPublicMetrics(amount);
@@ -301,15 +388,18 @@
     q('resultSource').textContent=`${title} · National amount ${money(amount)} · Equal-share illustration ${money(m.share)}`;
     q('costSourceNote').textContent=`Loaded from public commitment: ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(m.share)} illustrative share.`;
     await runCalculation(false);
-    translatePublic();
+    updatePublicManualPreview();
   }
 
   q('translateBtn').addEventListener('click', ()=>{
     const amount=Number(q('publicAmount').value||0);
-    const title=q('selectedAnnouncement').hidden ? 'Custom public amount' : q('selectedAnnouncement').textContent.replace(/^Selected:\s*/,'');
-    applyPublicToMain(amount,title);
+    if(!(amount>0)){
+      q('publicManualStatus').textContent='Enter a national amount greater than zero.';
+      return;
+    }
+    applyPublicToMain(amount,'Custom public amount');
   });
-  q('publicAmount').addEventListener('input', ()=>{ if(currentHTV) translatePublic(); });
+  q('publicAmount').addEventListener('input', updatePublicManualPreview);
 
   async function loadFeed(){
     try{ const r=await fetch('/api/feed',{cache:'no-store'}); const d=await r.json(); const box=q('feed'); box.innerHTML='';
@@ -352,8 +442,6 @@
         const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.dataset.translated='false'; result.textContent='Tap Translate to my time to calculate your equal-share illustration.';
         btn.addEventListener('click',async()=>{
           q('publicAmount').value=String(Math.round(item.amount));
-          q('selectedAnnouncement').hidden=false;
-          q('selectedAnnouncement').innerHTML=`<b>Selected:</b> ${item.title} · ${money(item.amount)}`;
           await applyPublicToMain(item.amount,item.title);
           result.dataset.translated='true';
           result.textContent=commitmentTimeText(item.amount);
