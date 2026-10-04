@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import math
 import time
 from datetime import datetime, timezone
@@ -251,7 +252,9 @@ def parse_feed_xml(content: bytes, source: dict[str, str]) -> list[dict[str, Any
         published = ""
         for child in list(node):
             name = _tag_name(child.tag)
-            text = (child.text or "").strip()
+            # Some Atom feeds (including Statistics Canada) wrap titles in nested XHTML.
+            # itertext() preserves those titles instead of returning an empty child.text.
+            text = html.unescape(" ".join(part.strip() for part in child.itertext() if part and part.strip())).strip()
             if name == "title" and text:
                 title = text
             elif name == "link":
