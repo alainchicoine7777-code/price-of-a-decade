@@ -110,7 +110,7 @@
         <p class="eyebrow">2015–2025 · THE PRICE OF A DECADE</p>
         <h2>WHAT DID THE DECADE<br><em>COST YOU IN TIME?</em></h2>
         <p>This applies the book's cumulative-excess logic: only burden above the 2015 relationship counts toward the headline. Price-level pressure is accumulated year by year; federal tax + payroll is measured against the book's 2015 benchmark rather than counting normal taxes paid.</p>
-        <p class="decade-benchmark-note">The headline is a <b>gross cumulative excess burden</b>. If a channel improved versus 2015, later improvement is shown separately rather than turned into a new cost. Housing/financing and public-resource claims remain separate so they are not double-counted.</p>
+        <p class="decade-benchmark-note">The headline is a <b>gross cumulative excess burden</b>. If a channel improved versus 2015, later improvement is shown separately rather than turned into a new cost. Housing, financing and public-resource claims are quantified separately so the major channels are visible without double counting them.</p>
         <div class="decade-legacy">The earlier broad prototype landed around <b>3.8 working years</b> for its example profile. This version is calculated from the profile you enter above, so the result can be higher or lower.</div>
       </div>
       <div class="decade-benchmark-result">
@@ -136,10 +136,16 @@
             <div class="decade-channel-sub">Cumulative 2016–2025 excess cost of the 2015 benchmark basket.</div>
           </div>
           <div class="decade-channel">
-            <div class="decade-channel-label">Housing + financing</div>
-            <div class="decade-channel-value" id="decadeHousingChannel">Separate</div>
-            <div class="decade-channel-sub" id="decadeHousingSub">Profile-sensitive and not added to the core total.</div>
-            <span class="decade-separate-tag">kept separate</span>
+            <div class="decade-channel-label">Housing / shelter pressure</div>
+            <div class="decade-channel-value" id="decadeHousingChannel">—</div>
+            <div class="decade-channel-sub" id="decadeHousingSub">2015 tenure-specific shelter benchmark repriced through 2025.</div>
+            <span class="decade-separate-tag">non-additive</span>
+          </div>
+          <div class="decade-channel">
+            <div class="decade-channel-label">Mortgage financing pressure</div>
+            <div class="decade-channel-value" id="decadeFinancingChannel">—</div>
+            <div class="decade-channel-sub" id="decadeFinancingSub">Rate-only benchmark holding 2015 mortgage-interest exposure constant.</div>
+            <span class="decade-separate-tag">non-additive</span>
           </div>
           <div class="decade-channel">
             <div class="decade-channel-label">Public debt / fiscal claim</div>
@@ -216,6 +222,19 @@
   const DECADE_CPI = [126.6,128.4,130.4,133.4,136.0,137.0,141.6,151.2,157.1,160.9,164.2];
   const SHS_2015_AVG_GOODS_SERVICES = 60516;
   const SHS_2015_AVG_HOUSEHOLD_SIZE = 2.48;
+  const SHS_2015_SHELTER_ALL = 17509;
+  const SHS_2015_SHELTER_HOMEOWNER = 19478;
+  const SHS_2015_SHELTER_RENTER = 13518;
+
+  // Statistics Canada annual-average shelter changes, 2016–2025.
+  // Used only as a separate shelter-pressure benchmark; it is not added to the headline.
+  const SHELTER_ANNUAL_CHANGE = [0,0.016,0.017,0.020,0.026,0.017,0.039,0.069,0.056,0.057,0.030];
+
+  // CMHC / Statistics Canada conventional 5-year mortgage lending-rate annual averages.
+  // 2015–2020 averages are calculated from the published monthly series; later years use
+  // published annual averages. This isolates the rate effect by holding 2015 exposure fixed.
+  const MORTGAGE_5YR_RATE = [3.771,3.701,3.789,4.362,4.247,3.714,3.30,4.90,6.00,5.84,5.11];
+  const CPI_2015_MORTGAGE_INTEREST_WEIGHT = 0.035;
 
   // Book benchmark: simplified federal income tax + CPP/CPP2 + EI claim share.
   // Representative employment-income anchors published in the manuscript.
@@ -242,7 +261,7 @@
     const hoursEl=q('decadeHours');
     if(!hoursEl) return;
     if(!(currentHTV>0)){
-      ['decadeHours','decadeYears','decadeDays','decadeWeeks','decadeDollars','decadeTaxChannel','decadePriceChannel','decadePublicChannel'].forEach(id=>{ if(q(id)) q(id).textContent='—'; });
+      ['decadeHours','decadeYears','decadeDays','decadeWeeks','decadeDollars','decadeTaxChannel','decadePriceChannel','decadeHousingChannel','decadeFinancingChannel','decadePublicChannel'].forEach(id=>{ if(q(id)) q(id).textContent='—'; });
       q('decadeMath').textContent='Calculate your household profile above to see the decade benchmark.';
       return;
     }
@@ -311,13 +330,54 @@
       q('decadeTaxSub').textContent="Use the gross-income path above to apply the book's federal + payroll benchmark.";
     }
 
+    // Separate housing / shelter benchmark. Start with the 2015 SHS shelter amount that
+    // matches the user's tenure, scale it to household size, then follow the national
+    // annual-average shelter CPI path. This is a decomposition, not an additive headline item.
     const housing=q('housing').value;
-    if(housing==='renter'){
-      q('decadeHousingSub').textContent='Rent is already partly represented inside the household basket. Regional rent divergence is kept separate to prevent double counting.';
-    }else if(housing==='homeowner'){
-      q('decadeHousingSub').textContent='Home-entry price, mortgage service and interest depend on purchase timing, equity and financing. They remain separate from the core total.';
+    const shelterBaseNational = housing==='homeowner' ? SHS_2015_SHELTER_HOMEOWNER : housing==='renter' ? SHS_2015_SHELTER_RENTER : SHS_2015_SHELTER_ALL;
+    const shelterBase=(shelterBaseNational/SHS_2015_AVG_HOUSEHOLD_SIZE)*householdSize;
+    let shelterIndex=1;
+    let housingGrossExcessDollars=0;
+    let housingNetChangeDollars=0;
+    for(let i=1;i<SHELTER_ANNUAL_CHANGE.length;i++){
+      shelterIndex*=1+SHELTER_ANNUAL_CHANGE[i];
+      const annualDelta=shelterBase*(shelterIndex-1);
+      housingNetChangeDollars+=annualDelta;
+      if(annualDelta>0) housingGrossExcessDollars+=annualDelta;
+    }
+    const housingHours=housingGrossExcessDollars/currentHTV;
+    const housingYears=housingHours/annualProductiveHours;
+    q('decadeHousingChannel').textContent=`${num(housingYears)} years · ${money(housingGrossExcessDollars)}`;
+    const housingName=housing==='homeowner'?'homeowner':housing==='renter'?'renter':'all-household';
+    q('decadeHousingSub').textContent=`${housingName} 2015 shelter benchmark ${money(shelterBaseNational)} scaled to household size; national shelter-price path through 2025. Shown separately because shelter overlaps the general price-level channel.`;
+
+    // Separate rate-only mortgage-financing benchmark. The 2015 CPI mortgage-interest
+    // basket weight establishes a standardized exposure; only the 5-year mortgage-rate
+    // path changes. This prevents house-price growth from being counted again as financing.
+    let financingGrossExcessDollars=0;
+    let financingNetChangeDollars=0;
+    let financingHours=0;
+    let financingYears=0;
+    const baseMortgageInterest=scaled2015Basket*CPI_2015_MORTGAGE_INTEREST_WEIGHT;
+    const mortgageRateBase=MORTGAGE_5YR_RATE[0];
+    if(housing==='homeowner'){
+      for(let i=1;i<MORTGAGE_5YR_RATE.length;i++){
+        const annualCost=baseMortgageInterest*(MORTGAGE_5YR_RATE[i]/mortgageRateBase);
+        const annualDelta=annualCost-baseMortgageInterest;
+        financingNetChangeDollars+=annualDelta;
+        if(annualDelta>0) financingGrossExcessDollars+=annualDelta;
+      }
+      financingHours=financingGrossExcessDollars/currentHTV;
+      financingYears=financingHours/annualProductiveHours;
+      const financingNetLabel=financingNetChangeDollars<0?`${money(Math.abs(financingNetChangeDollars))} net relief`:`${money(financingNetChangeDollars)} net increase`;
+      q('decadeFinancingChannel').textContent=`${num(financingYears)} years · ${money(financingGrossExcessDollars)}`;
+      q('decadeFinancingSub').textContent=`Rate-only mortgage benchmark: 5-year conventional rate ${mortgageRateBase.toFixed(2)}% in 2015 → ${MORTGAGE_5YR_RATE[MORTGAGE_5YR_RATE.length-1].toFixed(2)}% in 2025; ${financingNetLabel}. House-price/principal growth is held out.`;
+    }else if(housing==='renter'){
+      q('decadeFinancingChannel').textContent='Not applied';
+      q('decadeFinancingSub').textContent='Mortgage financing is not applied to the renter profile. Financing effects that push rents are already present in the separate shelter benchmark.';
     }else{
-      q('decadeHousingSub').textContent='Housing and financing depend on the household profile and remain separate from the core total.';
+      q('decadeFinancingChannel').textContent='Not applied';
+      q('decadeFinancingSub').textContent='Select homeowner to apply the standardized rate-only mortgage-financing benchmark.';
     }
 
     const debt2015=26600000000;
@@ -331,7 +391,7 @@
     const modeNote=hasGrossTax
       ? `<p><b>Federal + payroll excess channel:</b> the book's representative claim share at ${money(perEarnerIncome)} per earner is interpolated from ${(rate2015*100).toFixed(1)}% in 2015 to ${(rate2025*100).toFixed(1)}% in 2025. Annual differences are measured against the 2015 relationship. <b>Gross cumulative excess = ${money(taxGrossExcessDollars)}</b> (${num(taxHours)} hours / ${num(taxYears)} years). <b>Net standardized change = ${money(taxNetChangeDollars)}</b> (${num(taxNetHours)} hours / ${num(taxNetYears)} years). Negative means the standardized federal + payroll structure improved versus 2015.</p>`
       : `<p><b>Federal + payroll excess channel:</b> not included because you selected direct disposable income. Switch to the gross-income path to apply the book's benchmark.</p>`;
-    q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level pressure:</b> each year from 2016–2025, the benchmark basket is repriced using annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(priceLevelDollars)}</b> = <b>${num(priceHours)} hours / ${num(priceYears)} productive years</b>.</p>${modeNote}<p><b>Core cumulative excess burden:</b> ${money(priceLevelDollars)} price-level pressure + ${money(taxGrossExcessDollars)} positive federal/payroll excess = <b>${money(coreDollars)}</b>. At your Human Time Value of ${money(currentHTV)}/hour, that equals <b>${num(coreHours)} productive hours</b> or <b>${num(coreYears)} productive years</b> at ${num(hpw)} hours/week × ${num(weeksPerYear)} weeks/year.</p><p><b>Why this fixes the income effect:</b> ordinary taxes paid are no longer treated as a new decade cost. Only deterioration relative to the 2015 benchmark can add to the headline. If the tax/payroll relationship improved, that improvement is shown as net relief instead.</p><p><b>Kept separate:</b> housing-entry/financing and public-resource claims because their incidence is profile-specific or overlaps other channels. The public-debt figure shown above is an economic-resource equivalence, not a personal tax bill.</p>`;
+    q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level pressure:</b> each year from 2016–2025, the benchmark basket is repriced using annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(priceLevelDollars)}</b> = <b>${num(priceHours)} hours / ${num(priceYears)} productive years</b>.</p>${modeNote}<p><b>Core cumulative excess burden:</b> ${money(priceLevelDollars)} price-level pressure + ${money(taxGrossExcessDollars)} positive federal/payroll excess = <b>${money(coreDollars)}</b>. At your Human Time Value of ${money(currentHTV)}/hour, that equals <b>${num(coreHours)} productive hours</b> or <b>${num(coreYears)} productive years</b> at ${num(hpw)} hours/week × ${num(weeksPerYear)} weeks/year.</p><p><b>Why this fixes the income effect:</b> ordinary taxes paid are no longer treated as a new decade cost. Only deterioration relative to the 2015 benchmark can add to the headline. If the tax/payroll relationship improved, that improvement is shown as net relief instead.</p><p><b>Housing / shelter pressure:</b> 2015 ${housingName} shelter spending of ${money(shelterBaseNational)}, scaled to your household size = <b>${money(shelterBase)}</b>. Following Statistics Canada's annual-average shelter path through 2025 produces <b>${money(housingGrossExcessDollars)}</b> of gross cumulative shelter pressure = <b>${num(housingHours)} hours / ${num(housingYears)} productive years</b>.</p><p><b>Mortgage financing pressure:</b> ${housing==='homeowner' ? `a standardized 2015 mortgage-interest exposure of ${money(baseMortgageInterest)} is held constant while the conventional 5-year mortgage-rate path changes from ${mortgageRateBase.toFixed(2)}% in 2015 to ${MORTGAGE_5YR_RATE[MORTGAGE_5YR_RATE.length-1].toFixed(2)}% in 2025. Gross positive rate-only excess = <b>${money(financingGrossExcessDollars)}</b> = <b>${num(financingHours)} hours / ${num(financingYears)} productive years</b>.` : `not applied for this housing profile.`}</p><p><b>Non-additivity rule:</b> housing and financing are shown as separate diagnostic channels. Broad shelter CPI contains financing effects, and the general price-level basket contains shelter, so these values are <b>not added to the core headline or to each other</b>. Their purpose is to show where the time pressure came from without double counting it.</p><p><b>Public-resource claim:</b> kept separate because it is an economic-resource equivalence, not a personal tax bill.</p>`;
   }
 
   function payload(){
