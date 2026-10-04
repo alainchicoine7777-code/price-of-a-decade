@@ -76,6 +76,7 @@
       <div class="comparison-meta">
         <div id="comparisonCost" class="comparison-cost">Selected cost: —</div>
         <div id="comparisonSummary" class="comparison-summary">Calculating the burden difference…</div>
+        <button type="button" id="resetComparison" class="comparison-reset">RESET DEFAULT INCOME RANGE</button>
       </div>
     </div>
     <div id="comparisonGrid" class="comparison-grid">
@@ -108,6 +109,16 @@
   let calcSeq = 0;
   let recalcTimer = null;
   let compareSeq = 0;
+  let compareTimer = null;
+  const DEFAULT_COMPARISON_INCOMES=[40000,75000,120000,200000];
+  function loadComparisonIncomes(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('podComparisonIncomes')||'null');
+      if(Array.isArray(saved) && saved.length===4 && saved.every(v=>Number(v)>0)) return saved.map(Number);
+    }catch(e){}
+    return [...DEFAULT_COMPARISON_INCOMES];
+  }
+  let comparisonIncomes=loadComparisonIncomes();
   const q = id => document.getElementById(id);
   const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(Number(n)||0);
   const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(Number(n)||0);
@@ -160,14 +171,14 @@
       return;
     }
     const seq=++compareSeq;
-    const incomes=[40000,75000,120000,200000];
+    const incomes=[...comparisonIncomes];
     const base=payload();
-    const requests=incomes.map(async income=>{
+    const requests=incomes.map(async (income,index)=>{
       const profile={...base,mode:'gross',gross_household_income:income,disposable_household_income:0,economic_cost:selectedCost};
       const r=await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile),cache:'no-store'});
       const d=await r.json();
       if(!r.ok) throw new Error(d.detail||'Comparison failed');
-      return {income,...d};
+      return {index,income,...d};
     });
     const settled=await Promise.allSettled(requests);
     if(seq!==compareSeq) return;
@@ -178,7 +189,8 @@
     }
     const maxHours=Math.max(...rows.map(r=>Number(r.cost_hours)||0),1);
     const minHours=Math.max(Math.min(...rows.map(r=>Number(r.cost_hours)||0).filter(v=>v>0)),0.0001);
-    const low=rows[0], high=rows[rows.length-1];
+    const byIncome=[...rows].sort((a,b)=>a.income-b.income);
+    const low=byIncome[0], high=byIncome[byIncome.length-1];
     const ratio=(Number(low.cost_hours)||0)/Math.max(Number(high.cost_hours)||0,0.0001);
     const summary=q('comparisonSummary');
     if(summary){
@@ -191,7 +203,23 @@
       const row=document.createElement('div'); row.className='comparison-row';
 
       const profile=document.createElement('div'); profile.className='comparison-profile';
-      profile.innerHTML=`<strong>${money(r.income)}</strong><span>gross household income</span><small>HTV ${money(r.human_time_value)}/hr</small>`;
+      const editor=document.createElement('div'); editor.className='comparison-income-editor';
+      const dollar=document.createElement('span'); dollar.textContent='$';
+      const incomeInput=document.createElement('input');
+      incomeInput.type='number'; incomeInput.min='1000'; incomeInput.step='1000'; incomeInput.value=String(Math.round(r.income));
+      incomeInput.setAttribute('aria-label',`Comparison gross household income ${r.index+1}`);
+      incomeInput.addEventListener('input',()=>{
+        const value=Number(incomeInput.value||0);
+        if(!(value>0)) return;
+        comparisonIncomes[r.index]=value;
+        try{localStorage.setItem('podComparisonIncomes',JSON.stringify(comparisonIncomes));}catch(e){}
+        clearTimeout(compareTimer);
+        compareTimer=setTimeout(()=>updateIncomeComparison(selectedCost),320);
+      });
+      editor.append(dollar,incomeInput);
+      const label=document.createElement('span'); label.textContent='gross household income · editable';
+      const htv=document.createElement('small'); htv.textContent=`HTV ${money(r.human_time_value)}/hr`;
+      profile.append(editor,label,htv);
 
       const visual=document.createElement('div'); visual.className='comparison-visual';
       const visualLabel=document.createElement('div'); visualLabel.className='comparison-bar-label';
@@ -208,6 +236,13 @@
       row.append(profile,visual,time); box.appendChild(row);
     });
   }
+
+  q('resetComparison').addEventListener('click',()=>{
+    comparisonIncomes=[...DEFAULT_COMPARISON_INCOMES];
+    try{localStorage.removeItem('podComparisonIncomes');}catch(e){}
+    const currentCost=Number(q('cost').value||0);
+    updateIncomeComparison(currentCost);
+  });
 
   function scheduleRecalc(){
     if(!hasCalculated) return;

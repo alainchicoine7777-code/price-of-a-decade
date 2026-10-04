@@ -21,6 +21,14 @@
 .comparison-profile strong{display:block;font-family:Georgia,serif;font-weight:400;color:var(--paper);font-size:1.55rem;line-height:1}
 .comparison-profile span{display:block;color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;margin-top:5px}
 .comparison-profile small{display:block;color:var(--gold2);font-size:.72rem;margin-top:9px}
+
+.comparison-reset{min-height:38px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:.64rem;font-weight:800;letter-spacing:.08em;cursor:pointer;padding:8px 12px}
+.comparison-reset:hover{border-color:var(--gold);color:var(--gold2);background:rgba(198,163,91,.06)}
+.comparison-income-editor{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;max-width:170px;border-bottom:1px solid rgba(198,163,91,.48)}
+.comparison-income-editor>span{color:var(--gold2);font-family:Georgia,serif;font-size:1.1rem;margin:0}
+.comparison-income-editor input{min-height:34px;margin:0;border:0;background:transparent;color:var(--paper);padding:2px 4px;font-family:Georgia,serif;font-size:1.55rem;line-height:1;appearance:textfield}
+.comparison-income-editor input::-webkit-outer-spin-button,.comparison-income-editor input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.comparison-income-editor:focus-within{border-bottom-color:var(--gold2)}
 .comparison-visual{min-width:0}
 .comparison-bar-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.07em}
 .comparison-bar-label b{color:var(--gold2);font-size:.76rem}
