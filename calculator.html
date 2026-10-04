@@ -512,17 +512,35 @@
     status.innerHTML=`Equal-share illustration: <b>${money(m.share)}</b> · <b>${num(m.hours)} productive hours</b> <span>(${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers)</span>`;
   }
   async function applyPublicToMain(amount, title='Custom public amount'){
+    const nationalAmount=Number(amount||0);
+    if(!(nationalAmount>0)){
+      q('publicManualStatus').textContent='Enter or select a national amount greater than zero.';
+      return;
+    }
     if(!currentHTV){
       q('publicManualStatus').textContent='Calculate your Human Time Value first.';
       return;
     }
-    const m=translatedPublicMetrics(amount);
+
+    // Keep every public-money control synchronized. This prevents a previous
+    // commitment/share from remaining visible after a different announcement is selected.
+    clearTimeout(recalcTimer);
+    q('publicAmount').value=String(Math.round(nationalAmount));
+    const m=translatedPublicMetrics(nationalAmount);
     q('cost').value=m.share.toFixed(2);
+    q('cost').dataset.source='public';
     q('resultContext').textContent='YOUR EQUAL-SHARE OF THIS PUBLIC COMMITMENT REQUIRES';
     q('resultSource').hidden=false;
-    q('resultSource').textContent=`${title} · National amount ${money(amount)} · Equal-share illustration ${money(m.share)}`;
-    q('costSourceNote').textContent=`Loaded from public commitment: ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(m.share)} illustrative share.`;
+    q('resultSource').textContent=`${title} · National amount ${money(nationalAmount)} · Equal-share illustration ${money(m.share)}`;
+    q('costSourceNote').textContent=`Loaded from public commitment: ${money(nationalAmount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(m.share)} illustrative share.`;
+    q('publicManualStatus').innerHTML=`Selected national amount: <b>${money(nationalAmount)}</b> · Your illustrative share: <b>${money(m.share)}</b>`;
+
     await runCalculation(false);
+
+    // Re-assert the displayed share after the async calculation so rapid clicks or
+    // an older in-flight calculation cannot leave a stale value visible in the field.
+    q('cost').value=m.share.toFixed(2);
+    q('publicAmount').value=String(Math.round(nationalAmount));
     updatePublicManualPreview();
   }
 
@@ -576,10 +594,14 @@
         const btn=document.createElement('button'); btn.type='button'; btn.className='translate-commitment'; btn.textContent='TRANSLATE TO MY TIME';
         const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.dataset.translated='false'; result.textContent='Tap Translate to my time to calculate your equal-share illustration.';
         btn.addEventListener('click',async()=>{
-          q('publicAmount').value=String(Math.round(item.amount));
-          await applyPublicToMain(item.amount,item.title);
-          result.dataset.translated='true';
-          result.textContent=commitmentTimeText(item.amount);
+          btn.disabled=true;
+          try{
+            await applyPublicToMain(item.amount,item.title);
+            result.dataset.translated='true';
+            result.textContent=commitmentTimeText(item.amount);
+          }finally{
+            btn.disabled=false;
+          }
         });
         card.append(head,link,amount,date,btn,result); box.appendChild(card);
       });
