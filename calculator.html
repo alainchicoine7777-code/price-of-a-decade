@@ -24,7 +24,6 @@
     .decade-mini span{display:block;font-size:.74rem;opacity:.68;margin-top:.15rem}
     .decade-benchmark details{margin-top:1rem}
     .decade-benchmark-note{font-size:.78rem;opacity:.68;margin-top:.8rem}
-    .decade-legacy{margin:.9rem 0 0;padding:.7rem .8rem;border-left:3px solid rgba(214,176,93,.75);background:rgba(214,176,93,.07);font-size:.82rem;line-height:1.45}
     .decade-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-top:1rem}
     .decade-channel{border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.85rem .9rem;min-width:0}
     .decade-channel.included{border-color:rgba(214,176,93,.35)}
@@ -111,7 +110,6 @@
         <h2>WHAT DID THE DECADE<br><em>COST YOU IN TIME?</em></h2>
         <p>This applies the book's cumulative-excess logic: only burden above the 2015 relationship counts toward the headline. Price-level pressure is accumulated year by year; federal tax + payroll is measured against the book's 2015 benchmark rather than counting normal taxes paid.</p>
         <p class="decade-benchmark-note">The headline is a <b>gross cumulative excess burden</b>. If a channel improved versus 2015, later improvement is shown separately rather than turned into a new cost. Housing, financing and public-resource claims are quantified separately so the major channels are visible without double counting them.</p>
-        <div class="decade-legacy">The earlier broad prototype landed around <b>3.8 working years</b> for its example profile. This version is calculated from the profile you enter above, so the result can be higher or lower.</div>
       </div>
       <div class="decade-benchmark-result">
         <p class="result-kicker">CORE CUMULATIVE EXCESS BURDEN</p>
@@ -167,18 +165,18 @@
       <div>
         <p class="eyebrow">SAME COST. DIFFERENT CANADIANS.</p>
         <h2>THE DOLLAR AMOUNT IS IDENTICAL.<br><em>THE HUMAN BURDEN IS NOT.</em></h2>
-        <p>One cost, four income levels. Province, earners and working schedule stay the same so the difference in productive-time burden is easy to see.</p>
+        <p>One cost, four federal tax-bracket reference incomes. Province and working schedule stay the same; household thresholds scale automatically with the number of earners.</p>
       </div>
       <div class="comparison-meta">
         <div id="comparisonCost" class="comparison-cost">Selected cost: —</div>
         <div id="comparisonSummary" class="comparison-summary">Calculating the burden difference…</div>
-        <button type="button" id="resetComparison" class="comparison-reset">RESET DEFAULT INCOME RANGE</button>
+        <button type="button" id="resetComparison" class="comparison-reset">RESET FEDERAL BRACKET DEFAULTS</button>
       </div>
     </div>
     <div id="comparisonGrid" class="comparison-grid">
       <div class="comparison-loading">Calculating income profiles…</div>
     </div>
-    <p class="comparison-note">Illustrative 2026 employment-income profiles using the same tax engine as the main calculator. This compares labour-time burden, not literal tax incidence.</p>
+    <p class="comparison-note">Default incomes are the 2026 federal taxable-income bracket thresholds, converted to household income under the calculator's equal-income-per-earner assumption. All four values remain editable.</p>
   </section>
 
   <section class="feeds-section national-feed-section">
@@ -205,16 +203,22 @@
   let recalcTimer = null;
   let compareSeq = 0;
   let compareTimer = null;
-  const DEFAULT_COMPARISON_INCOMES=[40000,75000,120000,200000];
-  function loadComparisonIncomes(){
-    try{
-      const saved=JSON.parse(localStorage.getItem('podComparisonIncomes')||'null');
-      if(Array.isArray(saved) && saved.length===4 && saved.every(v=>Number(v)>0)) return saved.map(Number);
-    }catch(e){}
-    return [...DEFAULT_COMPARISON_INCOMES];
-  }
-  let comparisonIncomes=loadComparisonIncomes();
   const q = id => document.getElementById(id);
+  const FEDERAL_BRACKET_THRESHOLDS_2026=[58523,117045,181440,258482];
+  function defaultComparisonIncomes(){
+    const earners=Math.max(1,Number(q('earners')?.value)||1);
+    return FEDERAL_BRACKET_THRESHOLDS_2026.map(v=>Math.round(v*earners));
+  }
+  function loadComparisonState(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('podComparisonIncomesV2')||'null');
+      if(Array.isArray(saved) && saved.length===4 && saved.every(v=>Number(v)>0)) return {incomes:saved.map(Number),custom:true};
+    }catch(e){}
+    return {incomes:defaultComparisonIncomes(),custom:false};
+  }
+  const comparisonState=loadComparisonState();
+  let comparisonIncomes=comparisonState.incomes;
+  let comparisonCustom=comparisonState.custom;
   const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(Number(n)||0);
   const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(Number(n)||0);
 
@@ -487,12 +491,13 @@
         const value=Number(incomeInput.value||0);
         if(!(value>0)) return;
         comparisonIncomes[r.index]=value;
-        try{localStorage.setItem('podComparisonIncomes',JSON.stringify(comparisonIncomes));}catch(e){}
+        comparisonCustom=true;
+        try{localStorage.setItem('podComparisonIncomesV2',JSON.stringify(comparisonIncomes));}catch(e){}
         clearTimeout(compareTimer);
         compareTimer=setTimeout(()=>updateIncomeComparison(selectedCost),320);
       });
       editor.append(dollar,incomeInput);
-      const label=document.createElement('span'); label.textContent='gross household income · editable';
+      const label=document.createElement('span'); label.textContent='federal bracket reference · household gross · editable';
       const htv=document.createElement('small'); htv.textContent=`HTV ${money(r.human_time_value)}/hr`;
       profile.append(editor,label,htv);
 
@@ -513,11 +518,20 @@
   }
 
   q('resetComparison').addEventListener('click',()=>{
-    comparisonIncomes=[...DEFAULT_COMPARISON_INCOMES];
-    try{localStorage.removeItem('podComparisonIncomes');}catch(e){}
+    comparisonCustom=false;
+    comparisonIncomes=defaultComparisonIncomes();
+    try{localStorage.removeItem('podComparisonIncomesV2');}catch(e){}
     const currentCost=Number(q('cost').value||0);
     updateIncomeComparison(currentCost);
   });
+
+
+  function refreshComparisonDefaultsForEarners(){
+    if(comparisonCustom) return;
+    comparisonIncomes=defaultComparisonIncomes();
+  }
+  q('earners').addEventListener('input',refreshComparisonDefaultsForEarners);
+  q('earners').addEventListener('change',refreshComparisonDefaultsForEarners);
 
   function scheduleRecalc(){
     if(!hasCalculated) return;
