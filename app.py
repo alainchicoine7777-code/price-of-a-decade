@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import html
 import math
+import re
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -66,6 +67,20 @@ FEEDS = [
 ]
 
 _feed_cache: dict[str, Any] = {"at": 0.0, "items": []}
+_spending_cache: dict[str, Any] = {"at": 0.0, "items": []}
+
+GC_NEWS_RELEASES_FEED = {
+    "source": "Government of Canada",
+    "url": "https://api.io.canada.ca/io-server/gc/news/en/v2?atomtitle=news+releases&format=atom&orderBy=desc&pick=40&publishedDate%3E=2025-01-01&sort=publishedDate&type=newsreleases",
+    "home": "https://www.canada.ca/en/news.html",
+}
+
+_MONEY_RE = re.compile(
+    r"(?:(?:C\$|CAD\s*\$?|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(trillion|billion|million|thousand|bn|m|k)?\b)|"
+    r"(?:([0-9][0-9,]*(?:\.[0-9]+)?)\s*(trillion|billion|million|thousand|bn|m|k)\s+(?:Canadian\s+)?dollars\b)",
+    re.I,
+)
+_SPENDING_CUES = re.compile(r"\b(announc(?:e|ed|es|ing|ement)?|commit(?:s|ted|ment)?|invest(?:s|ed|ment|ing)?|fund(?:s|ed|ing)?|provide(?:s|d)?|support(?:s|ed|ing)?|contribut(?:e|es|ed|ion)|allocat(?:e|es|ed|ion)|spend(?:s|ing)?|loan|guarantee|assistance|aid|package|grant)\b", re.I)
 
 
 def progressive_tax(income: float, brackets: list[tuple[float, float]]) -> float:
@@ -246,14 +261,15 @@ def parse_feed_xml(content: bytes, source: dict[str, str]) -> list[dict[str, Any
     root = ET.fromstring(content)
     out: list[dict[str, Any]] = []
     nodes = [n for n in root.iter() if _tag_name(n.tag) in {"entry", "item"}]
-    for node in nodes[:8]:
+    for node in nodes[:40]:
         title = "Untitled"
         link = source["home"]
         published = ""
+        summary = ""
+        author = ""
         for child in list(node):
             name = _tag_name(child.tag)
-            # Some Atom feeds (including Statistics Canada) wrap titles in nested XHTML.
-            # itertext() preserves those titles instead of returning an empty child.text.
+            # Atom feeds can wrap titles/summaries in nested XHTML.
             text = html.unescape(" ".join(part.strip() for part in child.itertext() if part and part.strip())).strip()
             if name == "title" and text:
                 title = text
@@ -263,9 +279,14 @@ def parse_feed_xml(content: bytes, source: dict[str, str]) -> list[dict[str, Any
                     link = href
             elif name in {"published", "updated", "pubdate", "date"} and text and not published:
                 published = text
+            elif name in {"summary", "description", "content"} and text and not summary:
+                summary = text
+            elif name in {"author", "creator"} and text and not author:
+                author = text
         out.append({
-            "source": source["source"],
+            "source": author or source["source"],
             "title": title,
+            "summary": summary,
             "link": link,
             "published": published,
             "timestamp": _parse_date(published),
@@ -280,6 +301,116 @@ async def fetch_feed(source: dict[str, str], client: httpx.AsyncClient) -> list[
         return parse_feed_xml(r.content, source)
     except Exception:
         return []
+
+
+def _money_value(number: str, unit: str | None) -> float:
+    value = float(number.replace(",", ""))
+    mult = {
+        "trillion": 1_000_000_000_000,
+        "billion": 1_000_000_000,
+        "bn": 1_000_000_000,
+        "million": 1_000_000,
+        "m": 1_000_000,
+        "thousand": 1_000,
+        "k": 1_000,
+    }.get((unit or "").lower(), 1)
+    return value * mult
+
+
+def _extract_commitment(text: str) -> tuple[float, str] | None:
+    if not text:
+        return None
+    compact = re.sub(r"\s+", " ", html.unescape(text)).strip()
+    # Prefer an amount in a sentence that also describes a government action.
+    sentences = re.split(r"(?<=[.!?])\s+", compact)
+    candidates: list[tuple[int, int, float, str]] = []
+    for sentence_index, sentence in enumerate(sentences):
+        cue = bool(_SPENDING_CUES.search(sentence))
+        for match_index, m in enumerate(_MONEY_RE.finditer(sentence)):
+            number = m.group(1) or m.group(3)
+            unit = m.group(2) or m.group(4)
+            if not number:
+                continue
+            amount = _money_value(number, unit)
+            if amount < 10_000:
+                continue
+            # Action-linked amounts rank ahead of incidental amounts. Within a sentence,
+            # earlier mentions rank ahead of later ones.
+            candidates.append((0 if cue else 1, sentence_index * 100 + match_index, amount, m.group(0).strip()))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: (x[0], x[1]))
+    _, _, amount, label = candidates[0]
+    return amount, label
+
+
+def _strip_html_page(content: str) -> str:
+    content = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", content)
+    content = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", content)
+    content = re.sub(r"(?is)<[^>]+>", " ", content)
+    return re.sub(r"\s+", " ", html.unescape(content)).strip()
+
+
+def _commitment_kind(text: str) -> str:
+    t = text.lower()
+    if "loan guarantee" in t or "guarantee" in t:
+        return "Loan guarantee"
+    if "repayable" in t or re.search(r"\bloan\b", t):
+        return "Loan / repayable support"
+    if "aid" in t or "assistance" in t:
+        return "Aid / assistance"
+    if "invest" in t:
+        return "Investment"
+    if "grant" in t:
+        return "Grant"
+    if "fund" in t:
+        return "Funding"
+    return "Public commitment"
+
+
+async def _spending_item(item: dict[str, Any], client: httpx.AsyncClient) -> dict[str, Any] | None:
+    combined = " ".join([item.get("title", ""), item.get("summary", "")])
+    found = _extract_commitment(combined)
+    page_text = ""
+    if not found and item.get("link", "").startswith("http"):
+        try:
+            r = await client.get(item["link"], timeout=9.0, follow_redirects=True, headers={"User-Agent": "PriceOfADecade/1.0"})
+            if r.is_success:
+                page_text = _strip_html_page(r.text)
+                found = _extract_commitment(page_text[:120_000])
+        except Exception:
+            pass
+    if not found:
+        return None
+    amount, amount_label = found
+    context = combined + " " + page_text[:8_000]
+    return {
+        "source": item.get("source") or "Government of Canada",
+        "title": item.get("title") or "Government announcement",
+        "link": item.get("link"),
+        "published": item.get("published", ""),
+        "timestamp": item.get("timestamp", 0),
+        "amount": round(amount, 2),
+        "amount_label": amount_label,
+        "kind": _commitment_kind(context),
+    }
+
+
+@app.get("/api/spending-feed")
+async def spending_feed() -> dict[str, Any]:
+    now = time.time()
+    if _spending_cache["items"] and now - _spending_cache["at"] < 1800:
+        return {"items": _spending_cache["items"], "cached": True}
+    async with httpx.AsyncClient() as client:
+        base_items = await fetch_feed(GC_NEWS_RELEASES_FEED, client)
+        # Keep network work bounded. The official feed is newest-first.
+        enriched = await asyncio.gather(*(_spending_item(item, client) for item in base_items[:28]))
+    items = [x for x in enriched if x]
+    items.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+    items = items[:12]
+    _spending_cache["at"] = now
+    _spending_cache["items"] = items
+    return {"items": items, "cached": False, "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/feed")

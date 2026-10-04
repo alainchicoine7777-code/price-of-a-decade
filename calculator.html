@@ -57,67 +57,151 @@
     </section>
   </section>
 
-  <section class="public-section">
-    <div><p class="eyebrow">NATIONAL LIVE FEED</p><h2>CANADA, IN REAL TIME.</h2><p>National releases from primary Canadian sources. Province selection does not filter this feed.</p></div>
-    <div id="feed" class="feed"><div class="feed-loading">Loading national releases…</div></div>
+  <section class="feeds-section">
+    <div class="feed-column">
+      <p class="eyebrow">NATIONAL LIVE FEED</p>
+      <h2>CANADA, IN REAL TIME.</h2>
+      <p>National releases from primary Canadian sources. Province selection does not filter this feed.</p>
+      <div id="feed" class="feed"><div class="feed-loading">Loading national releases…</div></div>
+    </div>
+    <div class="feed-column">
+      <p class="eyebrow">GOVERNMENT COMMITMENTS</p>
+      <h2>PUBLIC MONEY, IN YOUR TIME.</h2>
+      <p>Federal announcements with a detected dollar amount. Tap an item to translate that announced amount using your current Human Time Value.</p>
+      <div id="spendingFeed" class="feed commitment-feed"><div class="feed-loading">Loading quantified announcements…</div></div>
+    </div>
   </section>
 
   <section class="spending panel">
     <div><p class="section-label">PUBLIC SPENDING TRANSLATOR</p><h2>TURN A PUBLIC DOLLAR FIGURE INTO YOUR TIME.</h2><p>Enter an announced program or spending amount and translate it using your current Human Time Value.</p></div>
-    <div class="spend-input"><label>Program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE TO HUMAN TIME</button><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
+    <div class="spend-input"><label>Program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE TO HUMAN TIME</button><div id="selectedAnnouncement" class="selected-announcement" hidden></div><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
   </section>
 </main>
 <footer><span>Time is the currency. Money is only the accounting layer.</span><span>PriceOfADecade.com/calculator</span></footer>
 <script>
 (() => {
   let currentHTV = 0;
+  let hasCalculated = false;
+  let calcSeq = 0;
+  let recalcTimer = null;
   const q = id => document.getElementById(id);
-  const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(n);
-  const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(n);
+  const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(Number(n)||0);
+  const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(Number(n)||0);
 
-  document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
-    btn.classList.add('active'); q('mode').value = btn.dataset.mode;
-    const gross = btn.dataset.mode === 'gross'; q('grossWrap').hidden = !gross; q('dispWrap').hidden = gross;
-  }));
-
-  q('calcForm').addEventListener('submit', async e => {
-    e.preventDefault(); q('formError').textContent='';
-    const payload = {
+  function payload(){
+    return {
       province:q('province').value, mode:q('mode').value,
       gross_household_income:Number(q('gross').value||0), disposable_household_income:Number(q('disposable').value||0),
       earners:Number(q('earners').value), hours_per_week:Number(q('hours').value), weeks_per_year:Number(q('weeks').value),
       household_size:Number(q('household').value), housing_status:q('housing').value, economic_cost:Number(q('cost').value||0)
     };
+  }
+
+  function payloadReady(p){
+    if(!(p.earners>0 && p.hours_per_week>0 && p.weeks_per_year>0)) return false;
+    return p.mode==='gross' ? p.gross_household_income>0 : p.disposable_household_income>0;
+  }
+
+  async function runCalculation(showErrors=true){
+    const p=payload();
+    if(!payloadReady(p)) return;
+    const mySeq=++calcSeq;
+    if(showErrors) q('formError').textContent='';
     try {
-      const r = await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      const d = await r.json(); if(!r.ok) throw new Error(d.detail||'Calculation failed');
-      currentHTV=d.human_time_value; q('htv').textContent=money(d.human_time_value);
+      const r=await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p),cache:'no-store'});
+      const d=await r.json();
+      if(mySeq!==calcSeq) return;
+      if(!r.ok) throw new Error(d.detail||'Calculation failed');
+      currentHTV=d.human_time_value; hasCalculated=true;
+      q('htv').textContent=money(d.human_time_value);
       q('hoursResult').textContent=num(d.cost_hours); q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
       let tax=''; if(d.tax_detail){ tax=`<p><b>Estimated 2026 deductions:</b> ${money(d.tax_detail.total)} — federal tax ${money(d.tax_detail.federal)}, ${d.province} tax ${money(d.tax_detail.provincial)}, CPP/QPP + EI/QPIP ${money(d.tax_detail.payroll)}.</p>`; }
       q('mathDetail').innerHTML=`<p><b>Annual productive hours:</b> ${num(d.annual_productive_hours)}</p><p><b>Estimated/entered disposable income:</b> ${money(d.disposable_household_income)}</p><p><b>Human Time Value:</b> ${money(d.disposable_household_income)} ÷ ${num(d.annual_productive_hours)} = <b>${money(d.human_time_value)}/hour</b></p><p><b>Time price:</b> ${money(d.economic_cost)} ÷ ${money(d.human_time_value)} = <b>${num(d.cost_hours)} hours</b></p>${tax}<p>${d.assumption}</p>`;
       translatePublic();
-    } catch(err){ q('formError').textContent=err.message; }
+      refreshCommitmentResults();
+    } catch(err){ if(mySeq===calcSeq && showErrors) q('formError').textContent=err.message; }
+  }
+
+  function scheduleRecalc(){
+    if(!hasCalculated) return;
+    clearTimeout(recalcTimer);
+    recalcTimer=setTimeout(()=>runCalculation(false),260);
+  }
+
+  document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active'); q('mode').value = btn.dataset.mode;
+    const gross = btn.dataset.mode === 'gross'; q('grossWrap').hidden = !gross; q('dispWrap').hidden = gross;
+    scheduleRecalc();
+  }));
+
+  q('calcForm').addEventListener('submit', e => { e.preventDefault(); runCalculation(true); });
+  ['province','gross','disposable','earners','hours','weeks','household','housing','cost'].forEach(id=>{
+    q(id).addEventListener('input', scheduleRecalc);
+    q(id).addEventListener('change', scheduleRecalc);
   });
 
   function translatePublic(){
-    const amount=Number(q('publicAmount').value||0); if(!currentHTV){q('publicResult').textContent='Calculate your Human Time Value first.';return;}
+    const amount=Number(q('publicAmount').value||0);
+    if(!currentHTV){q('publicResult').textContent='Calculate your Human Time Value first.';return;}
     const hours=amount/currentHTV; const workYears=hours/(40*50);
-    q('publicResult').innerHTML=`At your Human Time Value, <b>${money(amount)}</b> is equivalent to <b>${num(hours)} productive hours</b>, or about <b>${num(workYears)} 2,000-hour working years</b>.`;
+    q('publicResult').innerHTML=`At your Human Time Value, <b>${money(amount)}</b> is equivalent to <b>${num(hours)} productive hours</b>, or about <b>${num(workYears)} 2,000-hour working years</b>. <span class="scale-note">This is an economic-scale translation of the announced amount, not an estimate of your personal tax bill.</span>`;
   }
   q('translateBtn').addEventListener('click', translatePublic);
+  q('publicAmount').addEventListener('input', ()=>{ if(currentHTV) translatePublic(); });
 
   async function loadFeed(){
-    try{ const r=await fetch('/api/feed'); const d=await r.json(); const box=q('feed'); box.innerHTML='';
+    try{ const r=await fetch('/api/feed',{cache:'no-store'}); const d=await r.json(); const box=q('feed'); box.innerHTML='';
       if(!d.items?.length){box.innerHTML='<div class="feed-loading">Live sources are temporarily unavailable.</div>';return;}
       d.items.slice(0,12).forEach(item=>{ const a=document.createElement('a'); a.className='feed-item'; a.href=item.link; a.target='_blank'; a.rel='noopener';
-        const s=document.createElement('span'); s.className='feed-source'; s.textContent=item.source;
+        const src=document.createElement('span'); src.className='feed-source'; src.textContent=item.source;
         const t=document.createElement('strong'); t.textContent=item.title;
         const date=document.createElement('span'); date.className='feed-date'; date.textContent=item.published||'';
-        a.append(s,t,date); box.appendChild(a); });
+        a.append(src,t,date); box.appendChild(a); });
     }catch(e){q('feed').innerHTML='<div class="feed-loading">Live sources are temporarily unavailable.</div>';}
   }
-  loadFeed(); q('calcForm').requestSubmit();
+
+  function commitmentTimeText(amount){
+    if(!currentHTV) return 'Calculate your Human Time Value above first.';
+    const hours=amount/currentHTV; const years=hours/2000;
+    return `${num(hours)} productive hours · ${num(years)} working years`;
+  }
+
+  function refreshCommitmentResults(){
+    document.querySelectorAll('.commitment-result[data-amount]').forEach(el=>{
+      el.textContent=commitmentTimeText(Number(el.dataset.amount));
+    });
+  }
+
+  async function loadSpendingFeed(){
+    const box=q('spendingFeed');
+    try{
+      const r=await fetch('/api/spending-feed',{cache:'no-store'}); const d=await r.json(); box.innerHTML='';
+      if(!d.items?.length){box.innerHTML='<div class="feed-loading">No recent quantified federal announcements were detected. The feed will populate as new releases are published.</div>';return;}
+      d.items.forEach(item=>{
+        const card=document.createElement('div'); card.className='commitment-item';
+        const head=document.createElement('div'); head.className='commitment-head';
+        const src=document.createElement('span'); src.className='feed-source'; src.textContent=item.source||'Government of Canada';
+        const kind=document.createElement('span'); kind.className='commitment-kind'; kind.textContent=item.kind||'Public commitment';
+        head.append(src,kind);
+        const link=document.createElement('a'); link.href=item.link; link.target='_blank'; link.rel='noopener'; link.className='commitment-title'; link.textContent=item.title;
+        const amount=document.createElement('div'); amount.className='commitment-amount'; amount.textContent=money(item.amount);
+        const date=document.createElement('div'); date.className='feed-date'; date.textContent=item.published||'';
+        const btn=document.createElement('button'); btn.type='button'; btn.className='translate-commitment'; btn.textContent='TRANSLATE TO MY TIME';
+        const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.textContent=commitmentTimeText(item.amount);
+        btn.addEventListener('click',()=>{
+          q('publicAmount').value=String(Math.round(item.amount));
+          q('selectedAnnouncement').hidden=false;
+          q('selectedAnnouncement').innerHTML=`<b>Selected:</b> ${item.title} · ${money(item.amount)}`;
+          translatePublic();
+          result.textContent=commitmentTimeText(item.amount);
+        });
+        card.append(head,link,amount,date,btn,result); box.appendChild(card);
+      });
+    }catch(e){box.innerHTML='<div class="feed-loading">Quantified announcements are temporarily unavailable.</div>';}
+  }
+
+  loadFeed(); loadSpendingFeed(); runCalculation(true);
 })();
 </script>
 </body></html>
