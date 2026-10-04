@@ -39,7 +39,7 @@
       <div id="dispWrap" hidden><label>Disposable household income (annual)<div class="money"><span>$</span><input id="disposable" type="number" min="0" step="100" value="70000"></div><small>Use your actual after-tax household income for the cleanest result.</small></label></div>
 
       <div class="section-label">3 — WHAT PERSONAL COST ARE YOU PRICING?</div>
-      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="1" value="1500"></div><small>Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. This field is separate from the government-spending translator below.</small></label>
+      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="1500"></div><small id="costSourceNote">Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. Public commitments can also load your equal-share illustration into this field.</small></label>
       <button class="gold-button full" type="submit">TRANSLATE THIS COST TO MY TIME</button>
       <p id="formError" class="error" aria-live="polite"></p>
     </form>
@@ -49,7 +49,7 @@
       <p class="result-kicker">YOUR HUMAN TIME VALUE</p>
       <div class="big-value" id="htv">—</div><p class="unit">after-tax dollars per productive hour</p>
       <div class="rule"></div>
-      <p class="result-kicker">THE COST YOU ENTERED REQUIRES</p>
+      <p class="result-kicker" id="resultContext">THE PERSONAL COST YOU ENTERED REQUIRES</p><p id="resultSource" class="result-source" hidden></p>
       <div class="time-stack"><strong id="hoursResult">—</strong><span>productive hours</span></div>
       <div class="mini-results"><div><strong id="daysResult">—</strong><span>8-hour workdays</span></div><div><strong id="weeksResult">—</strong><span>workweeks</span></div></div>
       <details><summary>SHOW ME THE MATH</summary><div id="mathDetail" class="math-detail">Enter your numbers and calculate.</div></details>
@@ -145,6 +145,11 @@
     q(id).addEventListener('input', scheduleRecalc);
     q(id).addEventListener('change', scheduleRecalc);
   });
+  q('cost').addEventListener('input',()=>{
+    q('resultContext').textContent='THE PERSONAL COST YOU ENTERED REQUIRES';
+    q('resultSource').hidden=true;
+    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. Public commitments can also load your equal-share illustration into this field.';
+  });
 
   function publicShare(amount){
     return publicCostDenominator>0 ? amount/publicCostDenominator : 0;
@@ -167,7 +172,26 @@
     const aggregateWorkYears=aggregateHours/2000;
     q('publicResult').innerHTML=`<b>National amount:</b> ${money(amount)}.<br><b>Your equal-share illustration:</b> ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = <b>${money(m.share)}</b>.<br><b>Your time equivalent:</b> ${money(m.share)} ÷ ${money(currentHTV)}/hour = <b>${num(m.hours)} productive hours</b>, <b>${num(m.workdays)} 8-hour workdays</b>, or <b>${num(m.workweeks)} workweeks</b>.<br><b>National resource scale at your time value:</b> ${num(aggregateHours)} productive hours, or about ${num(aggregateWorkYears)} 2,000-hour working years. <span class="scale-note">Methodology: equal allocation across ${publicCostDenominatorLabel}. This is an analytical illustration of public-resource scale, not a claim that this amount appears on your personal tax bill.</span>`;
   }
-  q('translateBtn').addEventListener('click', translatePublic);
+  async function applyPublicToMain(amount, title='Custom public amount'){
+    if(!currentHTV){
+      q('publicResult').textContent='Calculate your Human Time Value first.';
+      return;
+    }
+    const m=translatedPublicMetrics(amount);
+    q('cost').value=m.share.toFixed(2);
+    q('resultContext').textContent='YOUR EQUAL-SHARE OF THIS PUBLIC COMMITMENT REQUIRES';
+    q('resultSource').hidden=false;
+    q('resultSource').textContent=`${title} · National amount ${money(amount)} · Equal-share illustration ${money(m.share)}`;
+    q('costSourceNote').textContent=`Loaded from public commitment: ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(m.share)} illustrative share.`;
+    await runCalculation(false);
+    translatePublic();
+  }
+
+  q('translateBtn').addEventListener('click', ()=>{
+    const amount=Number(q('publicAmount').value||0);
+    const title=q('selectedAnnouncement').hidden ? 'Custom public amount' : q('selectedAnnouncement').textContent.replace(/^Selected:\s*/,'');
+    applyPublicToMain(amount,title);
+  });
   q('publicAmount').addEventListener('input', ()=>{ if(currentHTV) translatePublic(); });
 
   async function loadFeed(){
@@ -209,13 +233,14 @@
         const date=document.createElement('div'); date.className='feed-date'; date.textContent=item.published||'';
         const btn=document.createElement('button'); btn.type='button'; btn.className='translate-commitment'; btn.textContent='TRANSLATE TO MY TIME';
         const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.dataset.translated='false'; result.textContent='Tap Translate to my time to calculate your equal-share illustration.';
-        btn.addEventListener('click',()=>{
+        btn.addEventListener('click',async()=>{
           q('publicAmount').value=String(Math.round(item.amount));
           q('selectedAnnouncement').hidden=false;
           q('selectedAnnouncement').innerHTML=`<b>Selected:</b> ${item.title} · ${money(item.amount)}`;
-          translatePublic();
+          await applyPublicToMain(item.amount,item.title);
           result.dataset.translated='true';
           result.textContent=commitmentTimeText(item.amount);
+          document.querySelector('.result-panel').scrollIntoView({behavior:'smooth',block:'start'});
         });
         card.append(head,link,amount,date,btn,result); box.appendChild(card);
       });
