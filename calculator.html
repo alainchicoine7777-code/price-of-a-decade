@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Human Time Calculator — The Price of a Decade</title>
   <meta name="description" content="Translate money into the one currency you cannot replace: your time.">
-  <link rel="stylesheet" href="/static/site.css?v=20261004-3">
+  <link rel="stylesheet" href="/static/site.css?v=20261004-4">
 </head>
 <body class="site-body">
 <header class="topbar"><a class="brand" href="/">THE PRICE OF A DECADE</a><span class="navtag">HUMAN TIME CALCULATOR</span></header>
@@ -55,6 +55,15 @@
       <details><summary>SHOW ME THE MATH</summary><div id="mathDetail" class="math-detail">Enter your numbers and calculate.</div></details>
       <p class="method-note">The automatic tax path is a simplified 2026 employment-income estimate using basic personal amounts and statutory CPP/QPP, EI and QPIP rates. It is a research calculator, not a tax return.</p>
     </section>
+
+    <section class="panel public-money-panel">
+      <div class="public-money-header">
+        <p class="eyebrow">GOVERNMENT COMMITMENTS</p>
+        <h2>PUBLIC MONEY,<br><em>IN YOUR TIME.</em></h2>
+        <p>Quantified federal announcements. Tap one and your main result updates instantly.</p>
+      </div>
+      <div id="spendingFeed" class="feed commitment-feed public-money-scroll"><div class="feed-loading">Loading quantified announcements…</div></div>
+    </section>
   </section>
 
   <section class="comparison-section panel" aria-live="polite">
@@ -75,18 +84,12 @@
     <p class="comparison-note">Illustrative 2026 employment-income profiles using the same tax engine as the main calculator. This compares labour-time burden, not literal tax incidence.</p>
   </section>
 
-  <section class="feeds-section">
+  <section class="feeds-section national-feed-section">
     <div class="feed-column">
       <p class="eyebrow">NATIONAL LIVE FEED</p>
       <h2>CANADA, IN REAL TIME.</h2>
       <p>National releases from primary Canadian sources. Province selection does not filter this feed.</p>
       <div id="feed" class="feed"><div class="feed-loading">Loading national releases…</div></div>
-    </div>
-    <div class="feed-column">
-      <p class="eyebrow">GOVERNMENT COMMITMENTS</p>
-      <h2>PUBLIC MONEY, IN YOUR TIME.</h2>
-      <p>Federal announcements with a detected dollar amount. Tap an item to estimate an equal share per Canadian tax filer, then translate that share into your current Human Time Value.</p>
-      <div id="spendingFeed" class="feed commitment-feed"><div class="feed-loading">Loading quantified announcements…</div></div>
     </div>
   </section>
 
@@ -319,7 +322,6 @@
           await applyPublicToMain(item.amount,item.title);
           result.dataset.translated='true';
           result.textContent=commitmentTimeText(item.amount);
-          document.querySelector('.result-panel').scrollIntoView({behavior:'smooth',block:'start'});
         });
         card.append(head,link,amount,date,btn,result); box.appendChild(card);
       });
