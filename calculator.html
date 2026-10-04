@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Human Time Calculator — The Price of a Decade</title>
+  <meta name="description" content="Translate money into the one currency you cannot replace: your time.">
+  <link rel="stylesheet" href="/static/site.css">
+</head>
+<body class="site-body">
+<header class="topbar"><a class="brand" href="/">THE PRICE OF A DECADE</a><span class="navtag">HUMAN TIME CALCULATOR</span></header>
+<main class="calculator-shell">
+  <section class="calc-intro">
+    <p class="eyebrow">WHAT DOES IT COST IN TIME?</p>
+    <h1>YOUR MONEY HAS<br>A <em>TIME PRICE.</em></h1>
+    <p>Convert household income, taxes and any economic cost into productive hours of human life.</p>
+  </section>
+
+  <section class="calculator-grid">
+    <form id="calcForm" class="panel form-panel">
+      <div class="section-label">1 — YOUR HOUSEHOLD</div>
+      <div class="field-grid">
+        <label>Province or territory<select id="province" required>
+          <option value="AB">Alberta</option><option value="BC">British Columbia</option><option value="MB">Manitoba</option><option value="NB" selected>New Brunswick</option><option value="NL">Newfoundland and Labrador</option><option value="NS">Nova Scotia</option><option value="NT">Northwest Territories</option><option value="NU">Nunavut</option><option value="ON">Ontario</option><option value="PE">Prince Edward Island</option><option value="QC">Quebec</option><option value="SK">Saskatchewan</option><option value="YT">Yukon</option>
+        </select><small>Used only for the tax estimate.</small></label>
+        <label>Number of earners<input id="earners" type="number" min="1" max="10" value="1" required></label>
+        <label>Hours worked per week<input id="hours" type="number" min="1" max="168" step="0.5" value="40" required></label>
+        <label>Weeks worked per year<input id="weeks" type="number" min="1" max="52.2" step="0.1" value="50" required></label>
+        <label>Household size<input id="household" type="number" min="1" max="20" value="1" required></label>
+        <label>Housing<select id="housing"><option value="homeowner">Homeowner</option><option value="renter">Renter</option><option value="other">Other</option></select></label>
+      </div>
+
+      <div class="section-label">2 — INCOME</div>
+      <div class="mode-switch" role="group" aria-label="Income method">
+        <button type="button" class="mode active" data-mode="gross">Estimate from gross income</button>
+        <button type="button" class="mode" data-mode="disposable">Enter disposable income</button>
+      </div>
+      <input id="mode" type="hidden" value="gross">
+      <div id="grossWrap"><label>Gross household income (annual)<div class="money"><span>$</span><input id="gross" type="number" min="0" step="100" value="90000"></div><small>Automatic 2026 estimate. Household income is split equally across earners.</small></label></div>
+      <div id="dispWrap" hidden><label>Disposable household income (annual)<div class="money"><span>$</span><input id="disposable" type="number" min="0" step="100" value="70000"></div><small>Use your actual after-tax household income for the cleanest result.</small></label></div>
+
+      <div class="section-label">3 — WHAT ARE YOU PRICING?</div>
+      <label>Economic cost<div class="money"><span>$</span><input id="cost" type="number" min="0" step="1" value="1500"></div></label>
+      <button class="gold-button full" type="submit">CALCULATE THE PRICE IN TIME</button>
+      <p id="formError" class="error" aria-live="polite"></p>
+    </form>
+
+    <section class="panel result-panel" aria-live="polite">
+      <div class="section-label">YOUR RESULT</div>
+      <p class="result-kicker">YOUR HUMAN TIME VALUE</p>
+      <div class="big-value" id="htv">—</div><p class="unit">after-tax dollars per productive hour</p>
+      <div class="rule"></div>
+      <p class="result-kicker">THE COST YOU ENTERED REQUIRES</p>
+      <div class="time-stack"><strong id="hoursResult">—</strong><span>productive hours</span></div>
+      <div class="mini-results"><div><strong id="daysResult">—</strong><span>8-hour workdays</span></div><div><strong id="weeksResult">—</strong><span>workweeks</span></div></div>
+      <details><summary>SHOW ME THE MATH</summary><div id="mathDetail" class="math-detail">Enter your numbers and calculate.</div></details>
+      <p class="method-note">The automatic tax path is a simplified 2026 employment-income estimate using basic personal amounts and statutory CPP/QPP, EI and QPIP rates. It is a research calculator, not a tax return.</p>
+    </section>
+  </section>
+
+  <section class="public-section">
+    <div><p class="eyebrow">NATIONAL LIVE FEED</p><h2>CANADA, IN REAL TIME.</h2><p>National releases from primary Canadian sources. Province selection does not filter this feed.</p></div>
+    <div id="feed" class="feed"><div class="feed-loading">Loading national releases…</div></div>
+  </section>
+
+  <section class="spending panel">
+    <div><p class="section-label">PUBLIC SPENDING TRANSLATOR</p><h2>TURN A PUBLIC DOLLAR FIGURE INTO YOUR TIME.</h2><p>Enter an announced program or spending amount and translate it using your current Human Time Value.</p></div>
+    <div class="spend-input"><label>Program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE TO HUMAN TIME</button><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
+  </section>
+</main>
+<footer><span>Human Directed. AI Amplified.</span><span>PriceOfADecade.com/calculator</span></footer>
+<script>
+(() => {
+  let currentHTV = 0;
+  const q = id => document.getElementById(id);
+  const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(n);
+  const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(n);
+
+  document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active'); q('mode').value = btn.dataset.mode;
+    const gross = btn.dataset.mode === 'gross'; q('grossWrap').hidden = !gross; q('dispWrap').hidden = gross;
+  }));
+
+  q('calcForm').addEventListener('submit', async e => {
+    e.preventDefault(); q('formError').textContent='';
+    const payload = {
+      province:q('province').value, mode:q('mode').value,
+      gross_household_income:Number(q('gross').value||0), disposable_household_income:Number(q('disposable').value||0),
+      earners:Number(q('earners').value), hours_per_week:Number(q('hours').value), weeks_per_year:Number(q('weeks').value),
+      household_size:Number(q('household').value), housing_status:q('housing').value, economic_cost:Number(q('cost').value||0)
+    };
+    try {
+      const r = await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const d = await r.json(); if(!r.ok) throw new Error(d.detail||'Calculation failed');
+      currentHTV=d.human_time_value; q('htv').textContent=money(d.human_time_value);
+      q('hoursResult').textContent=num(d.cost_hours); q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
+      let tax=''; if(d.tax_detail){ tax=`<p><b>Estimated 2026 deductions:</b> ${money(d.tax_detail.total)} — federal tax ${money(d.tax_detail.federal)}, ${d.province} tax ${money(d.tax_detail.provincial)}, CPP/QPP + EI/QPIP ${money(d.tax_detail.payroll)}.</p>`; }
+      q('mathDetail').innerHTML=`<p><b>Annual productive hours:</b> ${num(d.annual_productive_hours)}</p><p><b>Estimated/entered disposable income:</b> ${money(d.disposable_household_income)}</p><p><b>Human Time Value:</b> ${money(d.disposable_household_income)} ÷ ${num(d.annual_productive_hours)} = <b>${money(d.human_time_value)}/hour</b></p><p><b>Time price:</b> ${money(d.economic_cost)} ÷ ${money(d.human_time_value)} = <b>${num(d.cost_hours)} hours</b></p>${tax}<p>${d.assumption}</p>`;
+      translatePublic();
+    } catch(err){ q('formError').textContent=err.message; }
+  });
+
+  function translatePublic(){
+    const amount=Number(q('publicAmount').value||0); if(!currentHTV){q('publicResult').textContent='Calculate your Human Time Value first.';return;}
+    const hours=amount/currentHTV; const workYears=hours/(40*50);
+    q('publicResult').innerHTML=`At your Human Time Value, <b>${money(amount)}</b> is equivalent to <b>${num(hours)} productive hours</b>, or about <b>${num(workYears)} 2,000-hour working years</b>.`;
+  }
+  q('translateBtn').addEventListener('click', translatePublic);
+
+  async function loadFeed(){
+    try{ const r=await fetch('/api/feed'); const d=await r.json(); const box=q('feed'); box.innerHTML='';
+      if(!d.items?.length){box.innerHTML='<div class="feed-loading">Live sources are temporarily unavailable.</div>';return;}
+      d.items.slice(0,12).forEach(item=>{ const a=document.createElement('a'); a.className='feed-item'; a.href=item.link; a.target='_blank'; a.rel='noopener';
+        const s=document.createElement('span'); s.className='feed-source'; s.textContent=item.source;
+        const t=document.createElement('strong'); t.textContent=item.title;
+        const date=document.createElement('span'); date.className='feed-date'; date.textContent=item.published||'';
+        a.append(s,t,date); box.appendChild(a); });
+    }catch(e){q('feed').innerHTML='<div class="feed-loading">Live sources are temporarily unavailable.</div>';}
+  }
+  loadFeed(); q('calcForm').requestSubmit();
+})();
+</script>
+</body></html>
