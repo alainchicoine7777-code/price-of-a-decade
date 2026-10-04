@@ -38,9 +38,9 @@
       <div id="grossWrap"><label>Gross household income (annual)<div class="money"><span>$</span><input id="gross" type="number" min="0" step="100" value="90000"></div><small>Automatic 2026 estimate. Household income is split equally across earners.</small></label></div>
       <div id="dispWrap" hidden><label>Disposable household income (annual)<div class="money"><span>$</span><input id="disposable" type="number" min="0" step="100" value="70000"></div><small>Use your actual after-tax household income for the cleanest result.</small></label></div>
 
-      <div class="section-label">3 — WHAT ARE YOU PRICING?</div>
-      <label>Economic cost<div class="money"><span>$</span><input id="cost" type="number" min="0" step="1" value="1500"></div></label>
-      <button class="gold-button full" type="submit">CALCULATE THE PRICE IN TIME</button>
+      <div class="section-label">3 — WHAT PERSONAL COST ARE YOU PRICING?</div>
+      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="1" value="1500"></div><small>Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. This field is separate from the government-spending translator below.</small></label>
+      <button class="gold-button full" type="submit">TRANSLATE THIS COST TO MY TIME</button>
       <p id="formError" class="error" aria-live="polite"></p>
     </form>
 
@@ -67,20 +67,22 @@
     <div class="feed-column">
       <p class="eyebrow">GOVERNMENT COMMITMENTS</p>
       <h2>PUBLIC MONEY, IN YOUR TIME.</h2>
-      <p>Federal announcements with a detected dollar amount. Tap an item to translate that announced amount using your current Human Time Value.</p>
+      <p>Federal announcements with a detected dollar amount. Tap an item to estimate an equal share per Canadian tax filer, then translate that share into your current Human Time Value.</p>
       <div id="spendingFeed" class="feed commitment-feed"><div class="feed-loading">Loading quantified announcements…</div></div>
     </div>
   </section>
 
   <section class="spending panel">
-    <div><p class="section-label">PUBLIC SPENDING TRANSLATOR</p><h2>TURN A PUBLIC DOLLAR FIGURE INTO YOUR TIME.</h2><p>Enter an announced program or spending amount and translate it using your current Human Time Value.</p></div>
-    <div class="spend-input"><label>Program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE TO HUMAN TIME</button><div id="selectedAnnouncement" class="selected-announcement" hidden></div><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
+    <div><p class="section-label">PUBLIC SPENDING TRANSLATOR</p><h2>WHAT WOULD AN EQUAL SHARE COST YOU IN TIME?</h2><p>Enter a national program or commitment amount. The calculator first divides it by the current equal-share tax-filer denominator, then converts that illustrative share into your productive time.</p></div>
+    <div class="spend-input"><label>National program / announcement amount<div class="money"><span>$</span><input id="publicAmount" type="number" min="0" step="1000000" value="405000000"></div></label><button type="button" id="translateBtn" class="ghost-button">TRANSLATE MY SHARE TO HUMAN TIME</button><div id="selectedAnnouncement" class="selected-announcement" hidden></div><div id="publicResult" class="public-result">Calculate your Human Time Value first.</div></div>
   </section>
 </main>
 <footer><span>Time is the currency. Money is only the accounting layer.</span><span>PriceOfADecade.com/calculator</span></footer>
 <script>
 (() => {
   let currentHTV = 0;
+  let publicCostDenominator = 31474740;
+  let publicCostDenominatorLabel = '31,474,740 individual tax returns (CRA, 2024 tax year)';
   let hasCalculated = false;
   let calcSeq = 0;
   let recalcTimer = null;
@@ -112,7 +114,10 @@
       const d=await r.json();
       if(mySeq!==calcSeq) return;
       if(!r.ok) throw new Error(d.detail||'Calculation failed');
-      currentHTV=d.human_time_value; hasCalculated=true;
+      currentHTV=d.human_time_value;
+      publicCostDenominator=Number(d.public_cost_denominator||publicCostDenominator);
+      publicCostDenominatorLabel=d.public_cost_denominator_label||publicCostDenominatorLabel;
+      hasCalculated=true;
       q('htv').textContent=money(d.human_time_value);
       q('hoursResult').textContent=num(d.cost_hours); q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
       let tax=''; if(d.tax_detail){ tax=`<p><b>Estimated 2026 deductions:</b> ${money(d.tax_detail.total)} — federal tax ${money(d.tax_detail.federal)}, ${d.province} tax ${money(d.tax_detail.provincial)}, CPP/QPP + EI/QPIP ${money(d.tax_detail.payroll)}.</p>`; }
@@ -141,11 +146,26 @@
     q(id).addEventListener('change', scheduleRecalc);
   });
 
+  function publicShare(amount){
+    return publicCostDenominator>0 ? amount/publicCostDenominator : 0;
+  }
+
+  function translatedPublicMetrics(amount){
+    const share=publicShare(amount);
+    const hours=currentHTV>0 ? share/currentHTV : 0;
+    const workdays=hours/8;
+    const hpw=Number(q('hours').value||40);
+    const workweeks=hpw>0 ? hours/hpw : 0;
+    return {share,hours,workdays,workweeks};
+  }
+
   function translatePublic(){
     const amount=Number(q('publicAmount').value||0);
     if(!currentHTV){q('publicResult').textContent='Calculate your Human Time Value first.';return;}
-    const hours=amount/currentHTV; const workYears=hours/(40*50);
-    q('publicResult').innerHTML=`At your Human Time Value, <b>${money(amount)}</b> is equivalent to <b>${num(hours)} productive hours</b>, or about <b>${num(workYears)} 2,000-hour working years</b>. <span class="scale-note">This is an economic-scale translation of the announced amount, not an estimate of your personal tax bill.</span>`;
+    const m=translatedPublicMetrics(amount);
+    const aggregateHours=amount/currentHTV;
+    const aggregateWorkYears=aggregateHours/2000;
+    q('publicResult').innerHTML=`<b>National amount:</b> ${money(amount)}.<br><b>Your equal-share illustration:</b> ${money(amount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = <b>${money(m.share)}</b>.<br><b>Your time equivalent:</b> ${money(m.share)} ÷ ${money(currentHTV)}/hour = <b>${num(m.hours)} productive hours</b>, <b>${num(m.workdays)} 8-hour workdays</b>, or <b>${num(m.workweeks)} workweeks</b>.<br><b>National resource scale at your time value:</b> ${num(aggregateHours)} productive hours, or about ${num(aggregateWorkYears)} 2,000-hour working years. <span class="scale-note">Methodology: equal allocation across ${publicCostDenominatorLabel}. This is an analytical illustration of public-resource scale, not a claim that this amount appears on your personal tax bill.</span>`;
   }
   q('translateBtn').addEventListener('click', translatePublic);
   q('publicAmount').addEventListener('input', ()=>{ if(currentHTV) translatePublic(); });
@@ -163,12 +183,12 @@
 
   function commitmentTimeText(amount){
     if(!currentHTV) return 'Calculate your Human Time Value above first.';
-    const hours=amount/currentHTV; const years=hours/2000;
-    return `${num(hours)} productive hours · ${num(years)} working years`;
+    const m=translatedPublicMetrics(amount);
+    return `Your equal-share illustration: ${money(m.share)} · ${num(m.hours)} productive hours · ${num(m.workdays)} workdays`;
   }
 
   function refreshCommitmentResults(){
-    document.querySelectorAll('.commitment-result[data-amount]').forEach(el=>{
+    document.querySelectorAll('.commitment-result[data-translated="true"]').forEach(el=>{
       el.textContent=commitmentTimeText(Number(el.dataset.amount));
     });
   }
@@ -188,12 +208,13 @@
         const amount=document.createElement('div'); amount.className='commitment-amount'; amount.textContent=money(item.amount);
         const date=document.createElement('div'); date.className='feed-date'; date.textContent=item.published||'';
         const btn=document.createElement('button'); btn.type='button'; btn.className='translate-commitment'; btn.textContent='TRANSLATE TO MY TIME';
-        const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.textContent=commitmentTimeText(item.amount);
+        const result=document.createElement('div'); result.className='commitment-result'; result.dataset.amount=String(item.amount); result.dataset.translated='false'; result.textContent='Tap Translate to my time to calculate your equal-share illustration.';
         btn.addEventListener('click',()=>{
           q('publicAmount').value=String(Math.round(item.amount));
           q('selectedAnnouncement').hidden=false;
           q('selectedAnnouncement').innerHTML=`<b>Selected:</b> ${item.title} · ${money(item.amount)}`;
           translatePublic();
+          result.dataset.translated='true';
           result.textContent=commitmentTimeText(item.amount);
         });
         card.append(head,link,amount,date,btn,result); box.appendChild(card);

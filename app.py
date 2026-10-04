@@ -67,6 +67,13 @@ FEEDS = [
 ]
 
 _feed_cache: dict[str, Any] = {"at": 0.0, "items": []}
+
+# Equal-share public-cost illustration. Latest finalized CRA Individual Income Tax
+# Return Statistics for the 2024 tax year report 31,474,740 returns filed. This
+# denominator is an analytical allocation device, not a claim about legal tax incidence.
+PUBLIC_COST_DENOMINATOR = 31_474_740
+PUBLIC_COST_DENOMINATOR_LABEL = "31,474,740 individual tax returns (CRA, 2024 tax year)"
+PUBLIC_COST_DENOMINATOR_SOURCE = "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/income-statistics-gst-hst-statistics/t1-final-statistics/2024-tax-year.html"
 _spending_cache: dict[str, Any] = {"at": 0.0, "items": []}
 
 GC_NEWS_RELEASES_FEED = {
@@ -234,6 +241,9 @@ def calculate(req: CalcRequest) -> dict[str, Any]:
         "tax_detail": {k: round(v, 2) for k, v in tax_detail.items()} if tax_detail else None,
         "assumption": "Gross household income is divided equally across earners for the automatic tax estimate." if req.mode == "gross" else "Disposable household income was entered directly; no tax estimate was applied.",
         "tax_year": 2026,
+        "public_cost_denominator": PUBLIC_COST_DENOMINATOR,
+        "public_cost_denominator_label": PUBLIC_COST_DENOMINATOR_LABEL,
+        "public_cost_denominator_source": PUBLIC_COST_DENOMINATOR_SOURCE,
     }
 
 
