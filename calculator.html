@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Human Time Calculator — The Price of a Decade</title>
   <meta name="description" content="Translate money into the one currency you cannot replace: your time.">
-  <link rel="stylesheet" href="/static/site.css">
+  <link rel="stylesheet" href="/static/site.css?v=20261004-3">
 </head>
 <body class="site-body">
 <header class="topbar"><a class="brand" href="/">THE PRICE OF A DECADE</a><span class="navtag">HUMAN TIME CALCULATOR</span></header>
@@ -62,14 +62,17 @@
       <div>
         <p class="eyebrow">SAME COST. DIFFERENT CANADIANS.</p>
         <h2>THE DOLLAR AMOUNT IS IDENTICAL.<br><em>THE HUMAN BURDEN IS NOT.</em></h2>
-        <p>See how the same selected cost translates into productive time at four gross-income levels. The comparison keeps your current province, earners, hours, weeks and household settings constant; only gross household income changes.</p>
+        <p>One cost, four income levels. Province, earners and working schedule stay the same so the difference in productive-time burden is easy to see.</p>
       </div>
-      <div id="comparisonCost" class="comparison-cost">Current selected cost: —</div>
+      <div class="comparison-meta">
+        <div id="comparisonCost" class="comparison-cost">Selected cost: —</div>
+        <div id="comparisonSummary" class="comparison-summary">Calculating the burden difference…</div>
+      </div>
     </div>
     <div id="comparisonGrid" class="comparison-grid">
       <div class="comparison-loading">Calculating income profiles…</div>
     </div>
-    <p class="comparison-note">These are simplified 2026 employment-income illustrations using the same tax engine as the main calculator. They compare labour-time burden, not literal tax incidence.</p>
+    <p class="comparison-note">Illustrative 2026 employment-income profiles using the same tax engine as the main calculator. This compares labour-time burden, not literal tax incidence.</p>
   </section>
 
   <section class="feeds-section">
@@ -171,18 +174,35 @@
       return;
     }
     const maxHours=Math.max(...rows.map(r=>Number(r.cost_hours)||0),1);
+    const minHours=Math.max(Math.min(...rows.map(r=>Number(r.cost_hours)||0).filter(v=>v>0)),0.0001);
+    const low=rows[0], high=rows[rows.length-1];
+    const ratio=(Number(low.cost_hours)||0)/Math.max(Number(high.cost_hours)||0,0.0001);
+    const summary=q('comparisonSummary');
+    if(summary){
+      summary.innerHTML=`At this cost, a <b>${money(low.income)}</b> household gives up <b>${ratio.toFixed(1)}× more productive time</b> than a <b>${money(high.income)}</b> household.`;
+    }
     box.innerHTML='';
     rows.forEach(r=>{
-      const card=document.createElement('div'); card.className='comparison-card';
-      const income=document.createElement('div'); income.className='comparison-income'; income.textContent=money(r.income);
-      const label=document.createElement('div'); label.className='comparison-label'; label.textContent='gross household income';
-      const htv=document.createElement('div'); htv.className='comparison-htv'; htv.innerHTML=`<span>Human Time Value</span><strong>${money(r.human_time_value)}/hr</strong>`;
-      const hours=document.createElement('div'); hours.className='comparison-hours'; hours.innerHTML=`<strong>${num(r.cost_hours)}</strong><span>productive hours</span>`;
-      const days=document.createElement('div'); days.className='comparison-days'; days.textContent=`${num(r.cost_workdays)} workdays`;
+      const hours=Number(r.cost_hours)||0;
+      const multiple=hours/minHours;
+      const row=document.createElement('div'); row.className='comparison-row';
+
+      const profile=document.createElement('div'); profile.className='comparison-profile';
+      profile.innerHTML=`<strong>${money(r.income)}</strong><span>gross household income</span><small>HTV ${money(r.human_time_value)}/hr</small>`;
+
+      const visual=document.createElement('div'); visual.className='comparison-visual';
+      const visualLabel=document.createElement('div'); visualLabel.className='comparison-bar-label';
+      visualLabel.innerHTML=`<span>relative time burden</span><b>${multiple.toFixed(1)}×</b>`;
       const track=document.createElement('div'); track.className='burden-track';
-      const fill=document.createElement('div'); fill.className='burden-fill'; fill.style.width=`${Math.max(3,(Number(r.cost_hours)||0)/maxHours*100)}%`;
+      const fill=document.createElement('div'); fill.className='burden-fill';
+      fill.style.width=`${Math.max(8,hours/maxHours*100)}%`;
       track.appendChild(fill);
-      card.append(income,label,htv,hours,days,track); box.appendChild(card);
+      visual.append(visualLabel,track);
+
+      const time=document.createElement('div'); time.className='comparison-time';
+      time.innerHTML=`<strong>${num(r.cost_hours)}</strong><span>productive hours</span><small>${num(r.cost_workdays)} workdays</small>`;
+
+      row.append(profile,visual,time); box.appendChild(row);
     });
   }
 
