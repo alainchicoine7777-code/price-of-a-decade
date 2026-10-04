@@ -57,6 +57,21 @@
     </section>
   </section>
 
+  <section class="comparison-section panel" aria-live="polite">
+    <div class="comparison-head">
+      <div>
+        <p class="eyebrow">SAME COST. DIFFERENT CANADIANS.</p>
+        <h2>THE DOLLAR AMOUNT IS IDENTICAL.<br><em>THE HUMAN BURDEN IS NOT.</em></h2>
+        <p>See how the same selected cost translates into productive time at four gross-income levels. The comparison keeps your current province, earners, hours, weeks and household settings constant; only gross household income changes.</p>
+      </div>
+      <div id="comparisonCost" class="comparison-cost">Current selected cost: —</div>
+    </div>
+    <div id="comparisonGrid" class="comparison-grid">
+      <div class="comparison-loading">Calculating income profiles…</div>
+    </div>
+    <p class="comparison-note">These are simplified 2026 employment-income illustrations using the same tax engine as the main calculator. They compare labour-time burden, not literal tax incidence.</p>
+  </section>
+
   <section class="feeds-section">
     <div class="feed-column">
       <p class="eyebrow">NATIONAL LIVE FEED</p>
@@ -86,6 +101,7 @@
   let hasCalculated = false;
   let calcSeq = 0;
   let recalcTimer = null;
+  let compareSeq = 0;
   const q = id => document.getElementById(id);
   const money = n => new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(Number(n)||0);
   const num = n => new Intl.NumberFormat('en-CA',{maximumFractionDigits:2}).format(Number(n)||0);
@@ -124,7 +140,50 @@
       q('mathDetail').innerHTML=`<p><b>Annual productive hours:</b> ${num(d.annual_productive_hours)}</p><p><b>Estimated/entered disposable income:</b> ${money(d.disposable_household_income)}</p><p><b>Human Time Value:</b> ${money(d.disposable_household_income)} ÷ ${num(d.annual_productive_hours)} = <b>${money(d.human_time_value)}/hour</b></p><p><b>Time price:</b> ${money(d.economic_cost)} ÷ ${money(d.human_time_value)} = <b>${num(d.cost_hours)} hours</b></p>${tax}<p>${d.assumption}</p>`;
       translatePublic();
       refreshCommitmentResults();
+      updateIncomeComparison(d.economic_cost);
     } catch(err){ if(mySeq===calcSeq && showErrors) q('formError').textContent=err.message; }
+  }
+
+  async function updateIncomeComparison(cost){
+    const box=q('comparisonGrid');
+    if(!box) return;
+    const selectedCost=Number(cost||0);
+    q('comparisonCost').textContent=`Current selected cost: ${money(selectedCost)}`;
+    if(!(selectedCost>0)){
+      box.innerHTML='<div class="comparison-loading">Enter or select a cost above to compare the burden across incomes.</div>';
+      return;
+    }
+    const seq=++compareSeq;
+    const incomes=[40000,75000,120000,200000];
+    const base=payload();
+    const requests=incomes.map(async income=>{
+      const profile={...base,mode:'gross',gross_household_income:income,disposable_household_income:0,economic_cost:selectedCost};
+      const r=await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile),cache:'no-store'});
+      const d=await r.json();
+      if(!r.ok) throw new Error(d.detail||'Comparison failed');
+      return {income,...d};
+    });
+    const settled=await Promise.allSettled(requests);
+    if(seq!==compareSeq) return;
+    const rows=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
+    if(!rows.length){
+      box.innerHTML='<div class="comparison-loading">Comparison is temporarily unavailable.</div>';
+      return;
+    }
+    const maxHours=Math.max(...rows.map(r=>Number(r.cost_hours)||0),1);
+    box.innerHTML='';
+    rows.forEach(r=>{
+      const card=document.createElement('div'); card.className='comparison-card';
+      const income=document.createElement('div'); income.className='comparison-income'; income.textContent=money(r.income);
+      const label=document.createElement('div'); label.className='comparison-label'; label.textContent='gross household income';
+      const htv=document.createElement('div'); htv.className='comparison-htv'; htv.innerHTML=`<span>Human Time Value</span><strong>${money(r.human_time_value)}/hr</strong>`;
+      const hours=document.createElement('div'); hours.className='comparison-hours'; hours.innerHTML=`<strong>${num(r.cost_hours)}</strong><span>productive hours</span>`;
+      const days=document.createElement('div'); days.className='comparison-days'; days.textContent=`${num(r.cost_workdays)} workdays`;
+      const track=document.createElement('div'); track.className='burden-track';
+      const fill=document.createElement('div'); fill.className='burden-fill'; fill.style.width=`${Math.max(3,(Number(r.cost_hours)||0)/maxHours*100)}%`;
+      track.appendChild(fill);
+      card.append(income,label,htv,hours,days,track); box.appendChild(card);
+    });
   }
 
   function scheduleRecalc(){
