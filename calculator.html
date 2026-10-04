@@ -14,6 +14,8 @@
     .decade-benchmark-copy{max-width:760px}
     .decade-benchmark-copy p:last-child{margin-bottom:0}
     .decade-benchmark-result{border-left:1px solid rgba(214,176,93,.45);padding-left:1.25rem}
+    .decade-primary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:end}
+    .decade-primary-metric{min-width:0}
     .decade-main-value{font-size:clamp(2rem,4.2vw,3.5rem);font-weight:800;line-height:.95;margin:.35rem 0 .2rem}
     .decade-main-label{font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;opacity:.72}
     .decade-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:1rem}
@@ -22,8 +24,16 @@
     .decade-mini span{display:block;font-size:.74rem;opacity:.68;margin-top:.15rem}
     .decade-benchmark details{margin-top:1rem}
     .decade-benchmark-note{font-size:.78rem;opacity:.68;margin-top:.8rem}
+    .decade-legacy{margin:.9rem 0 0;padding:.7rem .8rem;border-left:3px solid rgba(214,176,93,.75);background:rgba(214,176,93,.07);font-size:.82rem;line-height:1.45}
+    .decade-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-top:1rem}
+    .decade-channel{border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.85rem .9rem;min-width:0}
+    .decade-channel.included{border-color:rgba(214,176,93,.35)}
+    .decade-channel-label{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;opacity:.7}
+    .decade-channel-value{font-size:1.2rem;font-weight:800;margin:.25rem 0 .1rem}
+    .decade-channel-sub{font-size:.77rem;opacity:.7;line-height:1.35}
+    .decade-separate-tag{display:inline-block;margin-top:.35rem;padding:.2rem .45rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.78}
     @media(max-width:900px){.decade-benchmark-head{grid-template-columns:1fr}.decade-benchmark-result{border-left:0;border-top:1px solid rgba(214,176,93,.35);padding-left:0;padding-top:1rem}}
-    @media(max-width:560px){.decade-mini-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
+    @media(max-width:560px){.decade-primary-grid{grid-template-columns:1fr}.decade-mini-grid{grid-template-columns:1fr}.decade-channel-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
   </style>
 </head>
 <body class="site-body">
@@ -99,20 +109,47 @@
       <div class="decade-benchmark-copy">
         <p class="eyebrow">2015–2025 · THE PRICE OF A DECADE</p>
         <h2>WHAT DID THE DECADE<br><em>COST YOU IN TIME?</em></h2>
-        <p>This standardized benchmark isolates the cumulative price-level pressure of the decade and converts it into your productive time using the household profile above.</p>
-        <p class="decade-benchmark-note">It is a price-level benchmark, not a grand total of taxes, housing, debt or public spending. Those categories overlap and are intentionally kept separate in the book's methodology.</p>
+        <p>This restores the broader Human Time model: direct tax and payroll claims plus the cumulative price-level pressure of the decade, translated through your household profile above.</p>
+        <p class="decade-benchmark-note">The headline is a <b>gross core burden</b>, not a claim that every dollar was wasted. Housing/financing and public-resource claims remain visible as separate channels so they are not double-counted.</p>
+        <div class="decade-legacy">The earlier broad prototype landed around <b>3.8 working years</b> for its example profile. This version is calculated from the profile you enter above, so the result can be higher or lower.</div>
       </div>
       <div class="decade-benchmark-result">
-        <p class="result-kicker">STANDARDIZED CUMULATIVE PRICE-LEVEL BURDEN</p>
-        <div class="decade-main-value" id="decadeHours">—</div>
-        <div class="decade-main-label">productive hours</div>
+        <p class="result-kicker">RESTORED CORE DECADE BURDEN</p>
+        <div class="decade-primary-grid">
+          <div class="decade-primary-metric"><div class="decade-main-value" id="decadeHours">—</div><div class="decade-main-label">productive hours</div></div>
+          <div class="decade-primary-metric"><div class="decade-main-value" id="decadeYears">—</div><div class="decade-main-label">productive years</div></div>
+        </div>
         <div class="decade-mini-grid">
           <div class="decade-mini"><strong id="decadeDays">—</strong><span>8-hour workdays</span></div>
           <div class="decade-mini"><strong id="decadeWeeks">—</strong><span>workweeks</span></div>
-          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>benchmark dollars</span></div>
+          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>core burden dollars</span></div>
+        </div>
+        <div class="decade-channel-grid">
+          <div class="decade-channel included">
+            <div class="decade-channel-label">Direct tax + payroll claim</div>
+            <div class="decade-channel-value" id="decadeTaxChannel">—</div>
+            <div class="decade-channel-sub" id="decadeTaxSub">Uses the same household tax profile as the calculator above.</div>
+          </div>
+          <div class="decade-channel included">
+            <div class="decade-channel-label">Price-level pressure</div>
+            <div class="decade-channel-value" id="decadePriceChannel">—</div>
+            <div class="decade-channel-sub">Cumulative 2016–2025 excess cost of the 2015 benchmark basket.</div>
+          </div>
+          <div class="decade-channel">
+            <div class="decade-channel-label">Housing + financing</div>
+            <div class="decade-channel-value" id="decadeHousingChannel">Separate</div>
+            <div class="decade-channel-sub" id="decadeHousingSub">Profile-sensitive and not added to the core total.</div>
+            <span class="decade-separate-tag">kept separate</span>
+          </div>
+          <div class="decade-channel">
+            <div class="decade-channel-label">Public debt / fiscal claim</div>
+            <div class="decade-channel-value" id="decadePublicChannel">—</div>
+            <div class="decade-channel-sub" id="decadePublicSub">Economic-resource illustration only; not a personal tax bill.</div>
+            <span class="decade-separate-tag">kept separate</span>
+          </div>
         </div>
         <details>
-          <summary>SHOW BENCHMARK MATH</summary>
+          <summary>SHOW DECADE MATH</summary>
           <div id="decadeMath" class="math-detail">Calculate your household profile above to see the decade benchmark.</div>
         </details>
       </div>
@@ -152,6 +189,9 @@
 <script>
 (() => {
   let currentHTV = 0;
+  let currentTaxDetail = null;
+  let currentDisposableIncome = 0;
+  let currentAnnualProductiveHours = 0;
   let publicCostDenominator = 31474740;
   let publicCostDenominatorLabel = '31,474,740 individual tax returns (CRA, 2024 tax year)';
   let hasCalculated = false;
@@ -181,25 +221,76 @@
     const hoursEl=q('decadeHours');
     if(!hoursEl) return;
     if(!(currentHTV>0)){
-      hoursEl.textContent='—'; q('decadeDays').textContent='—'; q('decadeWeeks').textContent='—'; q('decadeDollars').textContent='—';
+      ['decadeHours','decadeYears','decadeDays','decadeWeeks','decadeDollars','decadeTaxChannel','decadePriceChannel','decadePublicChannel'].forEach(id=>{ if(q(id)) q(id).textContent='—'; });
       q('decadeMath').textContent='Calculate your household profile above to see the decade benchmark.';
       return;
     }
+
     const householdSize=Math.max(1,Number(q('household').value||1));
     const hpw=Math.max(1,Number(q('hours').value||40));
+    const weeksPerYear=Math.max(1,Number(q('weeks').value||50));
+    const annualProductiveHours=currentAnnualProductiveHours>0 ? currentAnnualProductiveHours : hpw*weeksPerYear;
     const scaled2015Basket=(SHS_2015_AVG_GOODS_SERVICES/SHS_2015_AVG_HOUSEHOLD_SIZE)*householdSize;
     const base=DECADE_CPI[0];
-    let cumulativeExtra=0;
-    for(let i=1;i<DECADE_CPI.length;i++) cumulativeExtra += scaled2015Basket*((DECADE_CPI[i]/base)-1);
-    const hours=cumulativeExtra/currentHTV;
-    const days=hours/8;
-    const weeks=hours/hpw;
-    hoursEl.textContent=num(hours);
-    q('decadeDays').textContent=num(days);
-    q('decadeWeeks').textContent=num(weeks);
-    q('decadeDollars').textContent=money(cumulativeExtra);
+
+    let priceLevelDollars=0;
+    for(let i=1;i<DECADE_CPI.length;i++) priceLevelDollars += scaled2015Basket*((DECADE_CPI[i]/base)-1);
+
+    const p=payload();
+    const hasGrossTax = p.mode==='gross' && p.gross_household_income>0 && currentTaxDetail && Number(currentTaxDetail.total)>=0;
+    const annualDirectClaim = hasGrossTax ? Number(currentTaxDetail.total||0) : 0;
+    const directClaimYears = 10;
+    const taxDecadeDollars = annualDirectClaim*directClaimYears;
+
+    // Restored broad-model core: direct income/payroll claims + price-level pressure.
+    // Housing/financing and public-resource claims are intentionally shown separately.
+    const coreDollars = priceLevelDollars + taxDecadeDollars;
+    const coreHours = coreDollars/currentHTV;
+    const coreDays = coreHours/8;
+    const coreWeeks = coreHours/hpw;
+    const coreYears = coreHours/annualProductiveHours;
+
+    const priceHours=priceLevelDollars/currentHTV;
+    const priceYears=priceHours/annualProductiveHours;
+    const taxHours=hasGrossTax ? taxDecadeDollars/currentHTV : 0;
+    const taxYears=hasGrossTax ? taxHours/annualProductiveHours : 0;
+
+    hoursEl.textContent=num(coreHours);
+    q('decadeYears').textContent=num(coreYears);
+    q('decadeDays').textContent=num(coreDays);
+    q('decadeWeeks').textContent=num(coreWeeks);
+    q('decadeDollars').textContent=money(coreDollars);
+    q('decadePriceChannel').textContent=`${num(priceYears)} years · ${money(priceLevelDollars)}`;
+
+    if(hasGrossTax){
+      q('decadeTaxChannel').textContent=`${num(taxYears)} years · ${money(taxDecadeDollars)}`;
+      q('decadeTaxSub').textContent=`10-year gross-claim proxy using the calculator's annual tax/payroll estimate of ${money(annualDirectClaim)}.`;
+    }else{
+      q('decadeTaxChannel').textContent='Not included';
+      q('decadeTaxSub').textContent='Use the gross-income path above to include the direct tax/payroll channel.';
+    }
+
+    const housing=q('housing').value;
+    if(housing==='renter'){
+      q('decadeHousingSub').textContent='Rent is already partly represented inside the household basket. Regional rent divergence is kept separate to prevent double counting.';
+    }else if(housing==='homeowner'){
+      q('decadeHousingSub').textContent='Home-entry price, mortgage service and interest depend on purchase timing, equity and financing. They remain separate from the core total.';
+    }else{
+      q('decadeHousingSub').textContent='Housing and financing depend on the household profile and remain separate from the core total.';
+    }
+
+    const debt2015=26600000000;
+    const debt2025=53400000000;
+    const share2025=publicCostDenominator>0 ? debt2025/publicCostDenominator : 0;
+    const debtHours=currentHTV>0 ? share2025/currentHTV : 0;
+    q('decadePublicChannel').textContent=`${money(share2025)} · ${num(debtHours)} hours`;
+    q('decadePublicSub').textContent=`2024–25 federal debt charges (${money(debt2025)}) translated as an equal-share economic-resource illustration; 2014–15 was ${money(debt2015)}.`;
+
     const endpoint=((DECADE_CPI[DECADE_CPI.length-1]/base)-1)*100;
-    q('decadeMath').innerHTML=`<p><b>Audit period:</b> 2015–2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level burden:</b> for each year 2016–2025, the benchmark basket is repriced using that year's annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(cumulativeExtra)}</b>.</p><p><b>Your time translation:</b> ${money(cumulativeExtra)} ÷ ${money(currentHTV)}/productive hour = <b>${num(hours)} hours</b>.</p><p>This isolates price-level pressure only. It does not subtract wage gains or add overlapping tax, housing, interest, debt or public-spending burdens.</p>`;
+    const modeNote=hasGrossTax
+      ? `<p><b>Direct tax/payroll channel:</b> ${money(annualDirectClaim)} annual estimated claim × ${directClaimYears} years = <b>${money(taxDecadeDollars)}</b> = <b>${num(taxHours)} hours / ${num(taxYears)} productive years</b>. This is a current-profile gross-claim proxy, not a reconstruction of every historical tax return.</p>`
+      : `<p><b>Direct tax/payroll channel:</b> not included because you selected direct disposable income. Switch to the gross-income path to include that channel.</p>`;
+    q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level pressure:</b> each year from 2016–2025, the benchmark basket is repriced using annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(priceLevelDollars)}</b> = <b>${num(priceHours)} hours / ${num(priceYears)} productive years</b>.</p>${modeNote}<p><b>Restored core burden:</b> ${money(priceLevelDollars)} price-level pressure + ${money(taxDecadeDollars)} direct tax/payroll claim = <b>${money(coreDollars)}</b>. At your Human Time Value of ${money(currentHTV)}/hour, that equals <b>${num(coreHours)} productive hours</b> or <b>${num(coreYears)} productive years</b> at ${num(hpw)} hours/week × ${num(weeksPerYear)} weeks/year.</p><p><b>Kept separate:</b> housing-entry/financing and public-resource claims because their incidence is profile-specific or overlaps other channels. The public-debt figure shown above is an economic-resource equivalence, not a personal tax bill.</p>`;
   }
 
   function payload(){
@@ -227,6 +318,9 @@
       if(mySeq!==calcSeq) return;
       if(!r.ok) throw new Error(d.detail||'Calculation failed');
       currentHTV=d.human_time_value;
+      currentTaxDetail=d.tax_detail||null;
+      currentDisposableIncome=Number(d.disposable_household_income||0);
+      currentAnnualProductiveHours=Number(d.annual_productive_hours||0);
       publicCostDenominator=Number(d.public_cost_denominator||publicCostDenominator);
       publicCostDenominatorLabel=d.public_cost_denominator_label||publicCostDenominatorLabel;
       hasCalculated=true;
