@@ -31,6 +31,16 @@
     .decade-channel-value{font-size:1.2rem;font-weight:800;margin:.25rem 0 .1rem}
     .decade-channel-sub{font-size:.77rem;opacity:.7;line-height:1.35}
     .decade-separate-tag{display:inline-block;margin-top:.35rem;padding:.2rem .45rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.66rem;letter-spacing:.04em;text-transform:uppercase;opacity:.78}
+    /* Keep very large personal-cost results inside the centre result panel. */
+    .result-panel{min-width:0;overflow:hidden}
+    .time-stack{min-width:0;max-width:100%}
+    #hoursResult{display:block;max-width:100%;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+    #hoursResult.result-long{font-size:clamp(2.8rem,4vw,4.7rem)}
+    #hoursResult.result-xlong{font-size:clamp(2.15rem,3.1vw,3.6rem);letter-spacing:-.035em}
+    #hoursResult.result-xxlong{font-size:clamp(1.75rem,2.55vw,3rem);letter-spacing:-.045em}
+    .mini-results{min-width:0}
+    .mini-results>div{min-width:0}
+    .mini-results strong{display:block;max-width:100%;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
     @media(max-width:900px){.decade-benchmark-head{grid-template-columns:1fr}.decade-benchmark-result{border-left:0;border-top:1px solid rgba(214,176,93,.35);padding-left:0;padding-top:1rem}}
     @media(max-width:560px){.decade-primary-grid{grid-template-columns:1fr}.decade-mini-grid{grid-template-columns:1fr}.decade-channel-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
   </style>
@@ -67,9 +77,9 @@
       <div id="grossWrap"><label>Gross household income (annual)<div class="money"><span>$</span><input id="gross" type="number" min="0" step="100" value="90000"></div><small>Automatic 2026 estimate. Household income is split equally across earners.</small></label></div>
       <div id="dispWrap" hidden><label>Disposable household income (annual)<div class="money"><span>$</span><input id="disposable" type="number" min="0" step="100" value="70000"></div><small>Use your actual after-tax household income for the cleanest result.</small></label></div>
 
-      <div class="section-label">3 — WHAT PERSONAL COST ARE YOU PRICING?</div>
-      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="1500"></div><small id="costSourceNote">Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. When a government commitment is selected, this field shows the full national amount while the result applies your equal-share illustration.</small></label>
-      <button class="gold-button full" type="submit">TRANSLATE THIS COST TO MY TIME</button>
+      <div class="section-label">3 — WHAT NATIONAL AMOUNT ARE YOU TRANSLATING?</div>
+      <label>National amount to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="405000000"></div><small id="costSourceNote">Enter a national public amount. This uses the same equal-share method as Government Commitments before translating your share into productive time.</small></label>
+      <button class="gold-button full" type="submit">TRANSLATE THIS AMOUNT TO MY TIME</button>
       <p id="formError" class="error" aria-live="polite"></p>
     </form>
 
@@ -78,7 +88,7 @@
       <p class="result-kicker">YOUR HUMAN TIME VALUE</p>
       <div class="big-value" id="htv">—</div><p class="unit">after-tax dollars per productive hour</p>
       <div class="rule"></div>
-      <p class="result-kicker" id="resultContext">THE PERSONAL COST YOU ENTERED REQUIRES</p><p id="resultSource" class="result-source" hidden></p>
+      <p class="result-kicker" id="resultContext">YOUR EQUAL-SHARE OF THIS NATIONAL AMOUNT REQUIRES</p><p id="resultSource" class="result-source" hidden></p>
       <div class="time-stack"><strong id="hoursResult">—</strong><span>productive hours</span></div>
       <div class="mini-results"><div><strong id="daysResult">—</strong><span>8-hour workdays</span></div><div><strong id="weeksResult">—</strong><span>workweeks</span></div></div>
       <details><summary>SHOW ME THE MATH</summary><div id="mathDetail" class="math-detail">Enter your numbers and calculate.</div></details>
@@ -433,12 +443,10 @@
   }
 
   function effectiveCostForCalculation(){
-    const costInput=q('cost');
-    if(costInput.dataset.source==='public'){
-      const nationalAmount=Number(costInput.dataset.publicNationalAmount||costInput.value||0);
-      return publicShare(nationalAmount);
-    }
-    return Number(costInput.value||0);
+    // The main amount field and the Public Money field use the same national
+    // equal-share method. The visible amount is always the national source amount;
+    // the calculation payload receives only the user's illustrative share.
+    return publicShare(Number(q('cost').value||0));
   }
 
   function payload(){
@@ -473,7 +481,14 @@
       publicCostDenominatorLabel=d.public_cost_denominator_label||publicCostDenominatorLabel;
       hasCalculated=true;
       q('htv').textContent=money(d.human_time_value);
-      q('hoursResult').textContent=num(d.cost_hours); q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
+      const hoursText=num(d.cost_hours);
+      const hoursEl=q('hoursResult');
+      hoursEl.textContent=hoursText;
+      hoursEl.classList.remove('result-long','result-xlong','result-xxlong');
+      if(hoursText.length>=15) hoursEl.classList.add('result-xxlong');
+      else if(hoursText.length>=12) hoursEl.classList.add('result-xlong');
+      else if(hoursText.length>=9) hoursEl.classList.add('result-long');
+      q('daysResult').textContent=num(d.cost_workdays); q('weeksResult').textContent=num(d.cost_workweeks);
       let tax=''; if(d.tax_detail){ tax=`<p><b>Estimated 2026 deductions:</b> ${money(d.tax_detail.total)} — federal tax ${money(d.tax_detail.federal)}, ${d.province} tax ${money(d.tax_detail.provincial)}, CPP/QPP + EI/QPIP ${money(d.tax_detail.payroll)}.</p>`; }
       q('mathDetail').innerHTML=`<p><b>Annual productive hours:</b> ${num(d.annual_productive_hours)}</p><p><b>Estimated/entered disposable income:</b> ${money(d.disposable_household_income)}</p><p><b>Human Time Value:</b> ${money(d.disposable_household_income)} ÷ ${num(d.annual_productive_hours)} = <b>${money(d.human_time_value)}/hour</b></p><p><b>Time price:</b> ${money(d.economic_cost)} ÷ ${money(d.human_time_value)} = <b>${num(d.cost_hours)} hours</b></p>${tax}<p>${d.assumption}</p>`;
       updatePublicManualPreview();
@@ -564,7 +579,7 @@
     comparisonCustom=false;
     comparisonIncomes=defaultComparisonIncomes();
     try{localStorage.removeItem('podComparisonIncomesV2');}catch(e){}
-    const currentCost=Number(q('cost').value||0);
+    const currentCost=effectiveCostForCalculation();
     updateIncomeComparison(currentCost);
   });
 
@@ -591,15 +606,19 @@
 
   q('calcForm').addEventListener('submit', e => {
     e.preventDefault();
-    // The main gold button always means: translate the visible amount as a personal cost.
-    // A government commitment may have populated this field earlier, but that public-source
-    // mode must not survive an explicit personal-cost submission.
     const costInput=q('cost');
-    delete costInput.dataset.source;
-    delete costInput.dataset.publicNationalAmount;
-    q('resultContext').textContent='THE PERSONAL COST YOU ENTERED REQUIRES';
-    q('resultSource').hidden=true;
-    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost.';
+    const nationalAmount=Number(costInput.value||0);
+    if(!(nationalAmount>0)){
+      q('formError').textContent='Enter a national amount greater than zero.';
+      return;
+    }
+    const share=publicShare(nationalAmount);
+    q('publicAmount').value=String(Math.round(nationalAmount));
+    q('resultContext').textContent='YOUR EQUAL-SHARE OF THIS NATIONAL AMOUNT REQUIRES';
+    q('resultSource').hidden=false;
+    q('resultSource').textContent=`National amount ${money(nationalAmount)} · Equal-share illustration ${money(share)}`;
+    q('costSourceNote').textContent=`National amount: ${money(nationalAmount)}. Your result uses the equal-share illustration: ${money(nationalAmount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(share)}.`;
+    updatePublicManualPreview();
     runCalculation(true);
   });
   ['province','gross','disposable','earners','hours','weeks','household','housing','cost'].forEach(id=>{
@@ -608,11 +627,14 @@
   });
   q('cost').addEventListener('input',()=>{
     const costInput=q('cost');
-    delete costInput.dataset.source;
-    delete costInput.dataset.publicNationalAmount;
-    q('resultContext').textContent='THE PERSONAL COST YOU ENTERED REQUIRES';
+    const nationalAmount=Number(costInput.value||0);
+    q('publicAmount').value=costInput.value;
+    q('resultContext').textContent='YOUR EQUAL-SHARE OF THIS NATIONAL AMOUNT REQUIRES';
     q('resultSource').hidden=true;
-    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. When a government commitment is selected, this field shows the full national amount while the result applies your equal-share illustration.';
+    q('costSourceNote').textContent=nationalAmount>0
+      ? `This uses the same equal-share method as Public Money: ${money(nationalAmount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers.`
+      : 'Enter a national public amount. This uses the same equal-share method as Government Commitments before translating your share into productive time.';
+    updatePublicManualPreview();
   });
 
   function publicShare(amount){
@@ -744,6 +766,7 @@
     }catch(e){box.innerHTML='<div class="feed-loading">Quantified announcements are temporarily unavailable.</div>';}
   }
 
+  q('publicAmount').value=q('cost').value;
   loadFeed(); loadSpendingFeed(); runCalculation(true);
 })();
 </script>
