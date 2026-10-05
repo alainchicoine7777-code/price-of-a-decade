@@ -589,7 +589,19 @@
     scheduleRecalc();
   }));
 
-  q('calcForm').addEventListener('submit', e => { e.preventDefault(); runCalculation(true); });
+  q('calcForm').addEventListener('submit', e => {
+    e.preventDefault();
+    // The main gold button always means: translate the visible amount as a personal cost.
+    // A government commitment may have populated this field earlier, but that public-source
+    // mode must not survive an explicit personal-cost submission.
+    const costInput=q('cost');
+    delete costInput.dataset.source;
+    delete costInput.dataset.publicNationalAmount;
+    q('resultContext').textContent='THE PERSONAL COST YOU ENTERED REQUIRES';
+    q('resultSource').hidden=true;
+    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost.';
+    runCalculation(true);
+  });
   ['province','gross','disposable','earners','hours','weeks','household','housing','cost'].forEach(id=>{
     q(id).addEventListener('input', scheduleRecalc);
     q(id).addEventListener('change', scheduleRecalc);
