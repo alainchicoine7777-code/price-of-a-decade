@@ -5,7 +5,7 @@ import html
 import math
 import re
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -74,13 +74,38 @@ _feed_cache: dict[str, Any] = {"at": 0.0, "items": []}
 PUBLIC_COST_DENOMINATOR = 31_474_740
 PUBLIC_COST_DENOMINATOR_LABEL = "31,474,740 individual tax returns (CRA, 2024 tax year)"
 PUBLIC_COST_DENOMINATOR_SOURCE = "https://www.canada.ca/en/revenue-agency/programs/about-canada-revenue-agency-cra/income-statistics-gst-hst-statistics/t1-final-statistics/2024-tax-year.html"
-_spending_cache: dict[str, Any] = {"at": 0.0, "items": []}
+_spending_cache: dict[str, Any] = {"at": 0.0, "items": [], "meta": {}}
 
 GC_NEWS_RELEASES_FEED = {
     "source": "Government of Canada",
     "url": "https://api.io.canada.ca/io-server/gc/news/en/v2?atomtitle=news+releases&format=atom&orderBy=desc&pick=40&publishedDate%3E=2025-01-01&sort=publishedDate&type=newsreleases",
     "home": "https://www.canada.ca/en/news.html",
 }
+
+# Public Money archive: scan the current federal fiscal year (April 1 to March 31)
+# from oldest to newest in bounded 100-item pages. The official feed supports
+# publishedDate filtering and ordering; advancing by the last returned calendar
+# date gives us a practical fiscal-year archive without relying on a short rolling feed.
+GC_NEWS_BASE_URL = "https://api.io.canada.ca/io-server/gc/news/en/v2"
+PUBLIC_MONEY_ARCHIVE_LIMIT = 500
+
+
+def _current_fiscal_year_start(today: date | None = None) -> date:
+    d = today or datetime.now(timezone.utc).date()
+    return date(d.year if d.month >= 4 else d.year - 1, 4, 1)
+
+
+def _gc_fiscal_feed_source(start_on: date) -> dict[str, str]:
+    return {
+        "source": "Government of Canada",
+        "url": (
+            f"{GC_NEWS_BASE_URL}?atomtitle=fiscal+year+news+releases"
+            f"&format=atom&orderBy=asc&pick=100"
+            f"&publishedDate%3E={start_on.isoformat()}"
+            f"&sort=publishedDate&type=newsreleases"
+        ),
+        "home": "https://www.canada.ca/en/news.html",
+    }
 
 _MONEY_RE = re.compile(
     r"(?:(?:C\$|CAD\s*\$?|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(trillion|billion|million|thousand|bn|m|k)?\b)|"
@@ -271,7 +296,7 @@ def parse_feed_xml(content: bytes, source: dict[str, str]) -> list[dict[str, Any
     root = ET.fromstring(content)
     out: list[dict[str, Any]] = []
     nodes = [n for n in root.iter() if _tag_name(n.tag) in {"entry", "item"}]
-    for node in nodes[:40]:
+    for node in nodes[:100]:
         title = "Untitled"
         link = source["home"]
         published = ""
@@ -378,6 +403,71 @@ def _commitment_kind(text: str) -> str:
     return "Public commitment"
 
 
+
+
+async def fetch_fiscal_year_news(client: httpx.AsyncClient) -> tuple[list[dict[str, Any]], date, date]:
+    today = datetime.now(timezone.utc).date()
+    fiscal_start = _current_fiscal_year_start(today)
+    cursor = fiscal_start
+    all_items: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    # Safety bound: a fiscal year is at most 366 days. With 100 oldest-first
+    # releases per request, 60 pages is far beyond the expected requirement but
+    # prevents an accidental infinite loop if the upstream feed behaves oddly.
+    for _ in range(60):
+        if cursor > today:
+            break
+        page = await fetch_feed(_gc_fiscal_feed_source(cursor), client)
+        if not page:
+            break
+
+        page.sort(key=lambda x: x.get("timestamp", 0))
+        for item in page:
+            ts = item.get("timestamp", 0) or 0
+            if ts:
+                item_date = datetime.fromtimestamp(ts, timezone.utc).date()
+                if item_date < fiscal_start or item_date > today:
+                    continue
+            key = item.get("link") or f"{item.get('title','')}|{item.get('published','')}"
+            if key in seen:
+                continue
+            seen.add(key)
+            all_items.append(item)
+
+        valid_ts = [item.get("timestamp", 0) or 0 for item in page if item.get("timestamp", 0)]
+        if not valid_ts:
+            break
+        last_date = datetime.fromtimestamp(max(valid_ts), timezone.utc).date()
+        next_cursor = last_date + timedelta(days=1)
+        if next_cursor <= cursor:
+            break
+        cursor = next_cursor
+        if len(page) < 100:
+            break
+
+    all_items.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+    return all_items, fiscal_start, today
+
+
+def _spending_item_from_summary(item: dict[str, Any]) -> dict[str, Any] | None:
+    combined = " ".join([item.get("title", ""), item.get("summary", "")])
+    found = _extract_commitment(combined)
+    if not found:
+        return None
+    amount, amount_label = found
+    return {
+        "source": item.get("source") or "Government of Canada",
+        "title": item.get("title") or "Government announcement",
+        "link": item.get("link"),
+        "published": item.get("published", ""),
+        "timestamp": item.get("timestamp", 0),
+        "amount": round(amount, 2),
+        "amount_label": amount_label,
+        "kind": _commitment_kind(combined),
+    }
+
+
 async def _spending_item(item: dict[str, Any], client: httpx.AsyncClient) -> dict[str, Any] | None:
     combined = " ".join([item.get("title", ""), item.get("summary", "")])
     found = _extract_commitment(combined)
@@ -409,18 +499,57 @@ async def _spending_item(item: dict[str, Any], client: httpx.AsyncClient) -> dic
 @app.get("/api/spending-feed")
 async def spending_feed() -> dict[str, Any]:
     now = time.time()
-    if _spending_cache["items"] and now - _spending_cache["at"] < 1800:
-        return {"items": _spending_cache["items"], "cached": True}
+    if _spending_cache["items"] and now - _spending_cache["at"] < 3600:
+        return {
+            "items": _spending_cache["items"],
+            "cached": True,
+            **(_spending_cache.get("meta") or {}),
+        }
+
     async with httpx.AsyncClient() as client:
-        base_items = await fetch_feed(GC_NEWS_RELEASES_FEED, client)
-        # Keep network work bounded. The official feed is newest-first.
-        enriched = await asyncio.gather(*(_spending_item(item, client) for item in base_items[:28]))
-    items = [x for x in enriched if x]
+        fiscal_task = fetch_fiscal_year_news(client)
+        latest_task = fetch_feed(GC_NEWS_RELEASES_FEED, client)
+        (fiscal_base, fiscal_start, today), latest_base = await asyncio.gather(fiscal_task, latest_task)
+
+        # Fiscal-year archive: use the official feed title + summary so hundreds of
+        # releases can be scanned without issuing a page request for every release.
+        archive_items = [x for x in (_spending_item_from_summary(item) for item in fiscal_base) if x]
+
+        # Newest releases get full-page enrichment as before, catching commitments
+        # whose dollar amount is present on the release page but not in the feed summary.
+        enriched_latest = await asyncio.gather(*(_spending_item(item, client) for item in latest_base[:40]))
+        latest_items = [x for x in enriched_latest if x]
+
+    merged: dict[tuple[str, float], dict[str, Any]] = {}
+    for item in archive_items + latest_items:
+        key = ((item.get("link") or item.get("title") or "").strip(), float(item.get("amount", 0) or 0))
+        current = merged.get(key)
+        if not current or item.get("timestamp", 0) >= current.get("timestamp", 0):
+            merged[key] = item
+
+    items = list(merged.values())
     items.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
-    items = items[:12]
+    total_detected = len(items)
+    items = items[:PUBLIC_MONEY_ARCHIVE_LIMIT]
+
+    fiscal_end = date(fiscal_start.year + 1, 3, 31)
+    meta = {
+        "coverage_start": fiscal_start.isoformat(),
+        "coverage_end": min(today, fiscal_end).isoformat(),
+        "fiscal_year": f"{fiscal_start.year}-{str(fiscal_start.year + 1)[-2:]}",
+        "scanned_releases": len(fiscal_base),
+        "detected_commitments": total_detected,
+        "truncated": total_detected > PUBLIC_MONEY_ARCHIVE_LIMIT,
+    }
     _spending_cache["at"] = now
     _spending_cache["items"] = items
-    return {"items": items, "cached": False, "updated_at": datetime.now(timezone.utc).isoformat()}
+    _spending_cache["meta"] = meta
+    return {
+        "items": items,
+        "cached": False,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        **meta,
+    }
 
 
 @app.get("/api/feed")
