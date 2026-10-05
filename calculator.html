@@ -108,11 +108,11 @@
       <div class="decade-benchmark-copy">
         <p class="eyebrow">2015–2025 · THE PRICE OF A DECADE</p>
         <h2>WHAT DID THE DECADE<br><em>COST YOU IN TIME?</em></h2>
-        <p>This applies the book's cumulative-excess logic: only burden above the 2015 relationship counts toward the headline. Price-level pressure is accumulated year by year; federal tax + payroll is measured against the book's 2015 benchmark rather than counting normal taxes paid.</p>
-        <p class="decade-benchmark-note">The headline is a <b>gross cumulative excess burden</b>. If a channel improved versus 2015, later improvement is shown separately rather than turned into a new cost. Housing, financing and public-resource claims are quantified separately so the major channels are visible without double counting them.</p>
+        <p>This is a deduplicated middle-class burden ledger. Each excess dollar is assigned to one channel only, then translated into productive time.</p>
+        <p class="decade-benchmark-note">The headline is the <b>current audited grand total</b> for the channels we can quantify without overlap. Housing and financing are carved out of the broad price-level burden rather than added on top. Property tax and sales-tax amplification are already embedded in parent channels and will be isolated separately without changing the total.</p>
       </div>
       <div class="decade-benchmark-result">
-        <p class="result-kicker">CORE CUMULATIVE EXCESS BURDEN</p>
+        <p class="result-kicker">CURRENT DE-DUPLICATED GRAND TOTAL</p>
         <div class="decade-primary-grid">
           <div class="decade-primary-metric"><div class="decade-main-value" id="decadeHours">—</div><div class="decade-main-label">productive hours</div></div>
           <div class="decade-primary-metric"><div class="decade-main-value" id="decadeYears">—</div><div class="decade-main-label">productive years</div></div>
@@ -120,36 +120,50 @@
         <div class="decade-mini-grid">
           <div class="decade-mini"><strong id="decadeDays">—</strong><span>8-hour workdays</span></div>
           <div class="decade-mini"><strong id="decadeWeeks">—</strong><span>workweeks</span></div>
-          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>core burden dollars</span></div>
+          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>grand-total burden dollars</span></div>
         </div>
         <div class="decade-channel-grid">
           <div class="decade-channel included">
             <div class="decade-channel-label">Federal tax + payroll excess</div>
             <div class="decade-channel-value" id="decadeTaxChannel">—</div>
-            <div class="decade-channel-sub" id="decadeTaxSub">Measures only excess above the book's 2015 federal + payroll benchmark.</div>
+            <div class="decade-channel-sub" id="decadeTaxSub">Only deterioration above the book's 2015 federal + payroll benchmark enters the total.</div>
+            <span class="decade-separate-tag">counted once</span>
           </div>
           <div class="decade-channel included">
-            <div class="decade-channel-label">Price-level pressure</div>
+            <div class="decade-channel-label">General purchasing-power pressure</div>
             <div class="decade-channel-value" id="decadePriceChannel">—</div>
-            <div class="decade-channel-sub">Cumulative 2016–2025 excess cost of the 2015 benchmark basket.</div>
+            <div class="decade-channel-sub" id="decadePriceSub">Broad consumer-price burden after removing the shelter allocation.</div>
+            <span class="decade-separate-tag">counted once</span>
           </div>
-          <div class="decade-channel">
+          <div class="decade-channel included">
             <div class="decade-channel-label">Housing / shelter pressure</div>
             <div class="decade-channel-value" id="decadeHousingChannel">—</div>
-            <div class="decade-channel-sub" id="decadeHousingSub">2015 tenure-specific shelter benchmark repriced through 2025.</div>
-            <span class="decade-separate-tag">non-additive</span>
+            <div class="decade-channel-sub" id="decadeHousingSub">Shelter allocation after removing the mortgage-financing attribution.</div>
+            <span class="decade-separate-tag">counted once</span>
           </div>
-          <div class="decade-channel">
+          <div class="decade-channel included">
             <div class="decade-channel-label">Mortgage financing pressure</div>
             <div class="decade-channel-value" id="decadeFinancingChannel">—</div>
-            <div class="decade-channel-sub" id="decadeFinancingSub">Rate-only benchmark holding 2015 mortgage-interest exposure constant.</div>
-            <span class="decade-separate-tag">non-additive</span>
+            <div class="decade-channel-sub" id="decadeFinancingSub">Rate-only financing attribution carved out of shelter, not added on top.</div>
+            <span class="decade-separate-tag">counted once</span>
+          </div>
+          <div class="decade-channel">
+            <div class="decade-channel-label">Property tax</div>
+            <div class="decade-channel-value" id="decadePropertyChannel">Embedded in housing</div>
+            <div class="decade-channel-sub">Already inside the shelter channel. Next step is to isolate the property-tax share by province without changing the grand total.</div>
+            <span class="decade-separate-tag">embedded · isolate next</span>
+          </div>
+          <div class="decade-channel">
+            <div class="decade-channel-label">Sales-tax amplification</div>
+            <div class="decade-channel-value" id="decadeSalesTaxChannel">Embedded in prices</div>
+            <div class="decade-channel-sub">GST/HST/PST paid on higher nominal prices is already inside consumer-price pressure. It will be attributed separately, not added again.</div>
+            <span class="decade-separate-tag">embedded · isolate next</span>
           </div>
           <div class="decade-channel">
             <div class="decade-channel-label">Public debt / fiscal claim</div>
             <div class="decade-channel-value" id="decadePublicChannel">—</div>
-            <div class="decade-channel-sub" id="decadePublicSub">Economic-resource illustration only; not a personal tax bill.</div>
-            <span class="decade-separate-tag">kept separate</span>
+            <div class="decade-channel-sub" id="decadePublicSub">Economic-resource illustration only; not a direct household bill and therefore outside the grand total.</div>
+            <span class="decade-separate-tag">outside direct total</span>
           </div>
         </div>
         <details>
@@ -303,27 +317,10 @@
       }
     }
 
-    // Core cumulative excess: price-level pressure + only positive tax/payroll excess.
-    // Housing/financing and public-resource claims are intentionally shown separately.
-    const coreDollars = priceLevelDollars + taxGrossExcessDollars;
-    const coreHours = coreDollars/currentHTV;
-    const coreDays = coreHours/8;
-    const coreWeeks = coreHours/hpw;
-    const coreYears = coreHours/annualProductiveHours;
-
-    const priceHours=priceLevelDollars/currentHTV;
-    const priceYears=priceHours/annualProductiveHours;
     const taxHours=hasGrossTax ? taxGrossExcessDollars/currentHTV : 0;
     const taxYears=hasGrossTax ? taxHours/annualProductiveHours : 0;
     const taxNetHours=hasGrossTax ? taxNetChangeDollars/currentHTV : 0;
     const taxNetYears=hasGrossTax ? taxNetHours/annualProductiveHours : 0;
-
-    hoursEl.textContent=num(coreHours);
-    q('decadeYears').textContent=num(coreYears);
-    q('decadeDays').textContent=num(coreDays);
-    q('decadeWeeks').textContent=num(coreWeeks);
-    q('decadeDollars').textContent=money(coreDollars);
-    q('decadePriceChannel').textContent=`${num(priceYears)} years · ${money(priceLevelDollars)}`;
 
     if(hasGrossTax){
       const relief=taxNetChangeDollars<0 ? ` · ${money(Math.abs(taxNetChangeDollars))} net relief` : taxNetChangeDollars>0 ? ` · ${money(taxNetChangeDollars)} net increase` : '';
@@ -384,6 +381,43 @@
       q('decadeFinancingSub').textContent='Select homeowner to apply the standardized rate-only mortgage-financing benchmark.';
     }
 
+    // Deduplicated ledger. The broad price-level burden already contains shelter.
+    // First allocate no more than the broad price-level total to shelter, then carve the
+    // mortgage-rate attribution out of that shelter allocation. What remains is the
+    // general non-shelter price burden. This guarantees every dollar enters once.
+    const shelterAllocation=Math.min(housingGrossExcessDollars,priceLevelDollars);
+    const financingAllocation=housing==='homeowner' ? Math.min(financingGrossExcessDollars,shelterAllocation) : 0;
+    const housingResidual=Math.max(0,shelterAllocation-financingAllocation);
+    const generalPriceDollars=Math.max(0,priceLevelDollars-shelterAllocation);
+    const grandDollars=taxGrossExcessDollars+generalPriceDollars+housingResidual+financingAllocation;
+    const grandHours=grandDollars/currentHTV;
+    const grandDays=grandHours/8;
+    const grandWeeks=grandHours/hpw;
+    const grandYears=grandHours/annualProductiveHours;
+
+    const generalPriceHours=generalPriceDollars/currentHTV;
+    const generalPriceYears=generalPriceHours/annualProductiveHours;
+    const housingResidualHours=housingResidual/currentHTV;
+    const housingResidualYears=housingResidualHours/annualProductiveHours;
+    const financingAllocationHours=financingAllocation/currentHTV;
+    const financingAllocationYears=financingAllocationHours/annualProductiveHours;
+
+    hoursEl.textContent=num(grandHours);
+    q('decadeYears').textContent=num(grandYears);
+    q('decadeDays').textContent=num(grandDays);
+    q('decadeWeeks').textContent=num(grandWeeks);
+    q('decadeDollars').textContent=money(grandDollars);
+    q('decadePriceChannel').textContent=`${num(generalPriceYears)} years · ${money(generalPriceDollars)}`;
+    q('decadePriceSub').textContent=`Broad 2015–2025 consumer-price pressure after allocating ${money(shelterAllocation)} to shelter. Sales-tax amplification remains embedded here until separately attributed.`;
+    q('decadeHousingChannel').textContent=`${num(housingResidualYears)} years · ${money(housingResidual)}`;
+    q('decadeHousingSub').textContent=`${housingName} shelter allocation ${money(shelterAllocation)} less ${money(financingAllocation)} attributed to mortgage financing. Property tax remains embedded here until separately isolated.`;
+    if(housing==='homeowner'){
+      q('decadeFinancingChannel').textContent=`${num(financingAllocationYears)} years · ${money(financingAllocation)}`;
+      q('decadeFinancingSub').textContent=`Rate-only mortgage attribution carved out of shelter. Standalone rate-pressure estimate: ${money(financingGrossExcessDollars)}; amount counted in the ledger is capped at the shelter allocation to prevent double counting.`;
+    }else{
+      q('decadeFinancingChannel').textContent='Not applied';
+    }
+
     const debt2015=26600000000;
     const debt2025=53400000000;
     const share2025=publicCostDenominator>0 ? debt2025/publicCostDenominator : 0;
@@ -395,7 +429,7 @@
     const modeNote=hasGrossTax
       ? `<p><b>Federal + payroll excess channel:</b> the book's representative claim share at ${money(perEarnerIncome)} per earner is interpolated from ${(rate2015*100).toFixed(1)}% in 2015 to ${(rate2025*100).toFixed(1)}% in 2025. Annual differences are measured against the 2015 relationship. <b>Gross cumulative excess = ${money(taxGrossExcessDollars)}</b> (${num(taxHours)} hours / ${num(taxYears)} years). <b>Net standardized change = ${money(taxNetChangeDollars)}</b> (${num(taxNetHours)} hours / ${num(taxNetYears)} years). Negative means the standardized federal + payroll structure improved versus 2015.</p>`
       : `<p><b>Federal + payroll excess channel:</b> not included because you selected direct disposable income. Switch to the gross-income path to apply the book's benchmark.</p>`;
-    q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level pressure:</b> each year from 2016–2025, the benchmark basket is repriced using annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(priceLevelDollars)}</b> = <b>${num(priceHours)} hours / ${num(priceYears)} productive years</b>.</p>${modeNote}<p><b>Core cumulative excess burden:</b> ${money(priceLevelDollars)} price-level pressure + ${money(taxGrossExcessDollars)} positive federal/payroll excess = <b>${money(coreDollars)}</b>. At your Human Time Value of ${money(currentHTV)}/hour, that equals <b>${num(coreHours)} productive hours</b> or <b>${num(coreYears)} productive years</b> at ${num(hpw)} hours/week × ${num(weeksPerYear)} weeks/year.</p><p><b>Why this fixes the income effect:</b> ordinary taxes paid are no longer treated as a new decade cost. Only deterioration relative to the 2015 benchmark can add to the headline. If the tax/payroll relationship improved, that improvement is shown as net relief instead.</p><p><b>Housing / shelter pressure:</b> 2015 ${housingName} shelter spending of ${money(shelterBaseNational)}, scaled to your household size = <b>${money(shelterBase)}</b>. Following Statistics Canada's annual-average shelter path through 2025 produces <b>${money(housingGrossExcessDollars)}</b> of gross cumulative shelter pressure = <b>${num(housingHours)} hours / ${num(housingYears)} productive years</b>.</p><p><b>Mortgage financing pressure:</b> ${housing==='homeowner' ? `a standardized 2015 mortgage-interest exposure of ${money(baseMortgageInterest)} is held constant while the conventional 5-year mortgage-rate path changes from ${mortgageRateBase.toFixed(2)}% in 2015 to ${MORTGAGE_5YR_RATE[MORTGAGE_5YR_RATE.length-1].toFixed(2)}% in 2025. Gross positive rate-only excess = <b>${money(financingGrossExcessDollars)}</b> = <b>${num(financingHours)} hours / ${num(financingYears)} productive years</b>.` : `not applied for this housing profile.`}</p><p><b>Non-additivity rule:</b> housing and financing are shown as separate diagnostic channels. Broad shelter CPI contains financing effects, and the general price-level basket contains shelter, so these values are <b>not added to the core headline or to each other</b>. Their purpose is to show where the time pressure came from without double counting it.</p><p><b>Public-resource claim:</b> kept separate because it is an economic-resource equivalence, not a personal tax bill.</p>`;
+    q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Broad cumulative price pressure:</b> repricing that 2015 basket through the annual CPI path produces <b>${money(priceLevelDollars)}</b> of cumulative excess cost.</p>${modeNote}<p><b>Deduplication step 1 — shelter:</b> the tenure-specific shelter path produces ${money(housingGrossExcessDollars)} of standalone shelter pressure. The ledger allocates <b>${money(shelterAllocation)}</b> of the broad price burden to shelter, so shelter is removed from general purchasing-power pressure rather than added on top.</p><p><b>Deduplication step 2 — financing:</b> the standalone rate-only mortgage calculation is ${money(financingGrossExcessDollars)}. The ledger attributes <b>${money(financingAllocation)}</b> inside shelter and leaves <b>${money(housingResidual)}</b> as the remaining housing/shelter burden.</p><p><b>General purchasing-power pressure:</b> ${money(priceLevelDollars)} broad price pressure − ${money(shelterAllocation)} shelter allocation = <b>${money(generalPriceDollars)}</b>.</p><p><b>Current grand total:</b> ${money(taxGrossExcessDollars)} tax/payroll excess + ${money(generalPriceDollars)} general purchasing-power pressure + ${money(housingResidual)} housing/shelter residual + ${money(financingAllocation)} mortgage-financing attribution = <b>${money(grandDollars)}</b>. At ${money(currentHTV)}/hour this equals <b>${num(grandHours)} productive hours</b> or <b>${num(grandYears)} productive years</b>.</p><p><b>Embedded attribution:</b> property tax is already inside the housing/shelter channel, and GST/HST/PST amplification is already inside final consumer prices. When those are isolated, their dollars will be subtracted from the parent channel and shown on their own line, leaving the grand total unchanged unless better source data changes the underlying estimate.</p><p><b>Public-resource claim:</b> federal debt-service resource use remains outside the household grand total because it is not a direct personal bill.</p>`
   }
 
   function effectiveCostForCalculation(){
