@@ -68,7 +68,7 @@
       <div id="dispWrap" hidden><label>Disposable household income (annual)<div class="money"><span>$</span><input id="disposable" type="number" min="0" step="100" value="70000"></div><small>Use your actual after-tax household income for the cleanest result.</small></label></div>
 
       <div class="section-label">3 — WHAT PERSONAL COST ARE YOU PRICING?</div>
-      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="1500"></div><small id="costSourceNote">Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. Public commitments can also load your equal-share illustration into this field.</small></label>
+      <label>Personal cost to translate<div class="money"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="1500"></div><small id="costSourceNote">Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. When a government commitment is selected, this field shows the full national amount while the result applies your equal-share illustration.</small></label>
       <button class="gold-button full" type="submit">TRANSLATE THIS COST TO MY TIME</button>
       <p id="formError" class="error" aria-live="polite"></p>
     </form>
@@ -398,12 +398,21 @@
     q('decadeMath').innerHTML=`<p><b>Audit frame:</b> 2015 baseline through 2025.</p><p><b>Price-level endpoint:</b> CPI ${base.toFixed(1)} in 2015 to ${DECADE_CPI[DECADE_CPI.length-1].toFixed(1)} in 2025 = <b>${endpoint.toFixed(1)}%</b> higher.</p><p><b>2015 household benchmark:</b> ${money(SHS_2015_AVG_GOODS_SERVICES)} average annual goods-and-services spending, scaled from the 2015 national average household size of ${SHS_2015_AVG_HOUSEHOLD_SIZE} to your household size of ${householdSize} = <b>${money(scaled2015Basket)}</b>.</p><p><b>Cumulative price-level pressure:</b> each year from 2016–2025, the benchmark basket is repriced using annual-average CPI and the excess above 2015 prices is accumulated = <b>${money(priceLevelDollars)}</b> = <b>${num(priceHours)} hours / ${num(priceYears)} productive years</b>.</p>${modeNote}<p><b>Core cumulative excess burden:</b> ${money(priceLevelDollars)} price-level pressure + ${money(taxGrossExcessDollars)} positive federal/payroll excess = <b>${money(coreDollars)}</b>. At your Human Time Value of ${money(currentHTV)}/hour, that equals <b>${num(coreHours)} productive hours</b> or <b>${num(coreYears)} productive years</b> at ${num(hpw)} hours/week × ${num(weeksPerYear)} weeks/year.</p><p><b>Why this fixes the income effect:</b> ordinary taxes paid are no longer treated as a new decade cost. Only deterioration relative to the 2015 benchmark can add to the headline. If the tax/payroll relationship improved, that improvement is shown as net relief instead.</p><p><b>Housing / shelter pressure:</b> 2015 ${housingName} shelter spending of ${money(shelterBaseNational)}, scaled to your household size = <b>${money(shelterBase)}</b>. Following Statistics Canada's annual-average shelter path through 2025 produces <b>${money(housingGrossExcessDollars)}</b> of gross cumulative shelter pressure = <b>${num(housingHours)} hours / ${num(housingYears)} productive years</b>.</p><p><b>Mortgage financing pressure:</b> ${housing==='homeowner' ? `a standardized 2015 mortgage-interest exposure of ${money(baseMortgageInterest)} is held constant while the conventional 5-year mortgage-rate path changes from ${mortgageRateBase.toFixed(2)}% in 2015 to ${MORTGAGE_5YR_RATE[MORTGAGE_5YR_RATE.length-1].toFixed(2)}% in 2025. Gross positive rate-only excess = <b>${money(financingGrossExcessDollars)}</b> = <b>${num(financingHours)} hours / ${num(financingYears)} productive years</b>.` : `not applied for this housing profile.`}</p><p><b>Non-additivity rule:</b> housing and financing are shown as separate diagnostic channels. Broad shelter CPI contains financing effects, and the general price-level basket contains shelter, so these values are <b>not added to the core headline or to each other</b>. Their purpose is to show where the time pressure came from without double counting it.</p><p><b>Public-resource claim:</b> kept separate because it is an economic-resource equivalence, not a personal tax bill.</p>`;
   }
 
+  function effectiveCostForCalculation(){
+    const costInput=q('cost');
+    if(costInput.dataset.source==='public'){
+      const nationalAmount=Number(costInput.dataset.publicNationalAmount||costInput.value||0);
+      return publicShare(nationalAmount);
+    }
+    return Number(costInput.value||0);
+  }
+
   function payload(){
     return {
       province:q('province').value, mode:q('mode').value,
       gross_household_income:Number(q('gross').value||0), disposable_household_income:Number(q('disposable').value||0),
       earners:Number(q('earners').value), hours_per_week:Number(q('hours').value), weeks_per_year:Number(q('weeks').value),
-      household_size:Number(q('household').value), housing_status:q('housing').value, economic_cost:Number(q('cost').value||0)
+      household_size:Number(q('household').value), housing_status:q('housing').value, economic_cost:effectiveCostForCalculation()
     };
   }
 
@@ -552,9 +561,12 @@
     q(id).addEventListener('change', scheduleRecalc);
   });
   q('cost').addEventListener('input',()=>{
+    const costInput=q('cost');
+    delete costInput.dataset.source;
+    delete costInput.dataset.publicNationalAmount;
     q('resultContext').textContent='THE PERSONAL COST YOU ENTERED REQUIRES';
     q('resultSource').hidden=true;
-    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. Public commitments can also load your equal-share illustration into this field.';
+    q('costSourceNote').textContent='Enter a purchase, bill, fee, rent increase, debt payment or other personal dollar cost. When a government commitment is selected, this field shows the full national amount while the result applies your equal-share illustration.';
   });
 
   function publicShare(amount){
@@ -592,32 +604,33 @@
       return;
     }
 
-    // The equal-share amount does not depend on HTV, so write it to the Personal Cost
-    // field immediately. This keeps the government commitment and main calculator
-    // mechanically linked even while an HTV calculation is still loading.
+    // Public commitments display the full national source amount in the main field.
+    // The calculation payload separately converts that source amount to the user's
+    // equal-share illustration, so source and derived value are never confused.
     clearTimeout(recalcTimer);
     const share=publicShare(nationalAmount);
-    const shareText=share.toFixed(2);
-    q('publicAmount').value=String(Math.round(nationalAmount));
-    q('cost').value=shareText;
-    q('cost').setAttribute('value',shareText);
-    q('cost').dataset.source='public';
+    const nationalText=String(Math.round(nationalAmount));
+    const costInput=q('cost');
+    q('publicAmount').value=nationalText;
+    costInput.value=nationalText;
+    costInput.setAttribute('value',nationalText);
+    costInput.dataset.source='public';
+    costInput.dataset.publicNationalAmount=String(nationalAmount);
     q('resultContext').textContent='YOUR EQUAL-SHARE OF THIS PUBLIC COMMITMENT REQUIRES';
     q('resultSource').hidden=false;
     q('resultSource').textContent=`${title} · National amount ${money(nationalAmount)} · Equal-share illustration ${money(share)}`;
-    q('costSourceNote').textContent=`Loaded from public commitment: ${money(nationalAmount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(share)} illustrative share.`;
+    q('costSourceNote').textContent=`Loaded government commitment: ${money(nationalAmount)}. Your result uses the equal-share illustration: ${money(nationalAmount)} ÷ ${new Intl.NumberFormat('en-CA').format(publicCostDenominator)} tax filers = ${money(share)}.`;
     q('publicManualStatus').innerHTML=`Selected national amount: <b>${money(nationalAmount)}</b> · Your illustrative share: <b>${money(share)}</b>`;
 
-    // Recalculate HTV/result using the newly loaded share. runCalculation itself
-    // invalidates any older in-flight response through calcSeq.
     await runCalculation(false);
 
-    // Re-assert the selected public value after the async calculation so no stale
-    // response, delayed recalc, or browser repaint can restore a previous amount.
-    q('cost').value=shareText;
-    q('cost').setAttribute('value',shareText);
-    q('publicAmount').value=String(Math.round(nationalAmount));
-    q('cost').dataset.source='public';
+    // Keep the visible field anchored to the national source amount after the async
+    // calculation; the calculation itself continues to use the derived equal share.
+    costInput.value=nationalText;
+    costInput.setAttribute('value',nationalText);
+    costInput.dataset.source='public';
+    costInput.dataset.publicNationalAmount=String(nationalAmount);
+    q('publicAmount').value=nationalText;
     updatePublicManualPreview();
   }
 
