@@ -6,6 +6,156 @@
   <meta name="description" content="Translate money into the one currency you cannot replace: your time.">
   <link rel="stylesheet" href="/static/site.css?v=20261004-6">
 
+  <style id="theme-override">
+    :root{
+      --theme-bg-0:#030a12;
+      --theme-bg-1:#07111c;
+      --theme-bg-2:#0a2035;
+      --theme-panel-1:rgba(8,21,35,.94);
+      --theme-panel-2:rgba(5,14,24,.97);
+      --theme-line:rgba(255,255,255,.10);
+      --theme-line-strong:rgba(214,165,79,.34);
+      --theme-gold:#d6a54d;
+      --theme-gold-bright:#f1cf83;
+      --theme-gold-deep:#b9852f;
+      --theme-text:#f2ede2;
+      --theme-soft:#c8d3df;
+      --theme-muted:#9eabbe;
+      --theme-shadow:0 18px 40px rgba(0,0,0,.26);
+    }
+    html{color-scheme:dark}
+    body.site-body{
+      background:
+        radial-gradient(circle at 82% 12%, rgba(214,165,79,.10), transparent 20%),
+        radial-gradient(circle at 18% 0%, rgba(67,132,195,.16), transparent 26%),
+        linear-gradient(90deg, var(--theme-bg-0) 0%, var(--theme-bg-1) 28%, var(--theme-bg-2) 50%, var(--theme-bg-1) 72%, var(--theme-bg-0) 100%);
+      color:var(--theme-text);
+    }
+    .topbar, footer{
+      background:linear-gradient(90deg, rgba(4,11,19,.96), rgba(8,26,44,.92) 50%, rgba(4,11,19,.96));
+      border-color:var(--theme-line-strong)!important;
+      box-shadow:0 1px 0 rgba(255,255,255,.03) inset;
+    }
+    .brand, .navlink, .navtag, h1, h2, h3, strong, summary{color:var(--theme-text)}
+    .calc-intro h1 em,
+    .public-money-header h2 em,
+    .decade-benchmark h2 em,
+    .hero h1 em,
+    .thesis,
+    .eyebrow,
+    .section-label,
+    .public-manual-label,
+    .comparison-head,
+    .decade-summary-label,
+    .decade-channel-label,
+    .result-kicker,
+    details summary,
+    .feed-source,
+    .commitment-kind{
+      color:var(--theme-gold-bright)!important;
+    }
+    .calc-intro p,
+    .public-money-header p,
+    .method-note,
+    .decade-benchmark-copy p,
+    .comparison-note,
+    .comparison-meta,
+    .feed-date,
+    .result-source,
+    .public-manual-status,
+    small,
+    .unit,
+    footer span,
+    .subtitle{color:var(--theme-soft)!important}
+    .panel,
+    .feed-column,
+    .feed-item,
+    .commitment-item,
+    .comparison-row,
+    .decade-summary-bar,
+    .decade-channel,
+    .comparison-summary,
+    .hero{
+      background:linear-gradient(180deg, var(--theme-panel-1), var(--theme-panel-2));
+      border-color:var(--theme-line-strong)!important;
+      box-shadow:var(--theme-shadow);
+    }
+    .topbar a, .topbar span{letter-spacing:.04em}
+    .gold-button,
+    button.gold-button,
+    .comparison-reset{
+      background:linear-gradient(180deg, var(--theme-gold) 0%, var(--theme-gold-deep) 100%);
+      color:#0a1017!important;
+      border:1px solid rgba(255,226,171,.34)!important;
+      box-shadow:0 8px 22px rgba(185,133,47,.22);
+    }
+    .ghost-button,
+    .translate-commitment,
+    .mode{
+      background:linear-gradient(180deg, rgba(7,20,33,.88), rgba(5,13,22,.96));
+      color:var(--theme-gold-bright)!important;
+      border:1px solid rgba(214,165,79,.46)!important;
+    }
+    .mode.active{
+      background:linear-gradient(180deg, rgba(214,165,79,.16), rgba(214,165,79,.06));
+      color:var(--theme-gold-bright)!important;
+      border-color:rgba(241,207,131,.55)!important;
+      box-shadow:0 0 0 1px rgba(214,165,79,.15) inset;
+    }
+    input, select, textarea,
+    .money,
+    .public-money-input,
+    .comparison-income-editor input{
+      background:rgba(2,10,18,.92)!important;
+      color:var(--theme-text)!important;
+      border-color:rgba(151,170,194,.24)!important;
+    }
+    input::placeholder, textarea::placeholder{color:var(--theme-muted)}
+    .money span{color:var(--theme-gold-bright)!important}
+    .rule,
+    .public-money-header,
+    .section-label,
+    .decade-benchmark-copy,
+    .feed-item,
+    .commitment-item{border-color:var(--theme-line)!important}
+    .big-value,
+    #htv,
+    #hoursResult,
+    .time-stack strong,
+    .decade-main-value,
+    .decade-summary-item strong,
+    .decade-channel-value,
+    .comparison-time strong,
+    .commitment-amount{
+      color:var(--theme-gold-bright)!important;
+      text-shadow:0 0 16px rgba(214,165,79,.08);
+    }
+    .comparison-bar-label,
+    .decade-main-label,
+    .decade-summary-item span,
+    .decade-channel-sub,
+    .decade-separate-tag,
+    .comparison-profile label,
+    .comparison-profile small,
+    .commitment-result,
+    .feed-loading{color:var(--theme-soft)!important}
+    .decade-summary-item,
+    .decade-channel,
+    .commitment-result,
+    .decade-separate-tag,
+    .comparison-visual,
+    .comparison-summary{
+      background:rgba(255,255,255,.02);
+      border-color:var(--theme-line)!important;
+    }
+    .burden-track{background:rgba(255,255,255,.08)!important}
+    .burden-fill{background:linear-gradient(90deg, var(--theme-gold-bright), var(--theme-gold))!important}
+    .clockmark{border-color:rgba(214,165,79,.2)!important}
+    .clockmark span{border-color:rgba(214,165,79,.45)!important}
+    a{color:var(--theme-text)}
+  </style>
+
+
   <style>
     .decade-benchmark{margin-top:1.25rem;padding:1.35rem 1.4rem}
     .decade-benchmark-head{display:block}
