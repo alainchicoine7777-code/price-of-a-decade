@@ -8,20 +8,20 @@
 
   <style>
     .decade-benchmark{margin-top:1.25rem;padding:1.35rem 1.4rem}
-    .decade-benchmark-head{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:1.5rem;align-items:start}
+    .decade-benchmark-head{display:block}
     .decade-benchmark h2{margin:.2rem 0 .55rem;font-size:clamp(1.55rem,3vw,2.45rem);line-height:1.02}
     .decade-benchmark h2 em{font-style:italic}
-    .decade-benchmark-copy{max-width:760px}
+    .decade-benchmark-copy{max-width:none}
     .decade-benchmark-copy p:last-child{margin-bottom:0}
-    .decade-benchmark-result{border-left:1px solid rgba(214,176,93,.45);padding-left:1.25rem}
-    .decade-primary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:end}
-    .decade-primary-metric{min-width:0}
-    .decade-main-value{font-size:clamp(2rem,4.2vw,3.5rem);font-weight:800;line-height:.95;margin:.35rem 0 .2rem}
-    .decade-main-label{font-size:.86rem;letter-spacing:.04em;text-transform:uppercase;opacity:.72}
-    .decade-mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin-top:1rem}
-    .decade-mini{padding:.75rem .8rem;border:1px solid rgba(255,255,255,.12);border-radius:10px}
-    .decade-mini strong{display:block;font-size:1.05rem}
-    .decade-mini span{display:block;font-size:.74rem;opacity:.68;margin-top:.15rem}
+    .decade-summary-bar{margin-top:1.2rem;padding:1rem 1.05rem;border:1px solid rgba(214,176,93,.28);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01))}
+    .decade-summary-label{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;opacity:.76;margin-bottom:.8rem}
+    .decade-summary-grid{display:grid;grid-template-columns:1.2fr 1.2fr repeat(3,minmax(0,.9fr));gap:.75rem;align-items:stretch}
+    .decade-summary-item{min-width:0;padding:.85rem .9rem;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.02)}
+    .decade-summary-item.hero{border-color:rgba(214,176,93,.3)}
+    .decade-main-value{font-size:clamp(2.1rem,4vw,3.5rem);font-weight:800;line-height:.95;margin:.15rem 0 .2rem;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+    .decade-main-label{font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;opacity:.72}
+    .decade-summary-item strong{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums}
+    .decade-summary-item span{display:block;font-size:.76rem;opacity:.68;margin-top:.15rem}
     .decade-benchmark details{margin-top:1rem}
     .decade-benchmark-note{font-size:.78rem;opacity:.68;margin-top:.8rem}
     .decade-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-top:1rem}
@@ -41,8 +41,8 @@
     .mini-results{min-width:0}
     .mini-results>div{min-width:0}
     .mini-results strong{display:block;max-width:100%;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
-    @media(max-width:900px){.decade-benchmark-head{grid-template-columns:1fr}.decade-benchmark-result{border-left:0;border-top:1px solid rgba(214,176,93,.35);padding-left:0;padding-top:1rem}}
-    @media(max-width:560px){.decade-primary-grid{grid-template-columns:1fr}.decade-mini-grid{grid-template-columns:1fr}.decade-channel-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
+    @media(max-width:1100px){.decade-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.decade-summary-grid{grid-template-columns:1fr}.decade-channel-grid{grid-template-columns:1fr}.decade-benchmark{padding:1.1rem}}
   </style>
 </head>
 <body class="site-body">
@@ -121,66 +121,66 @@
         <p>This is a deduplicated middle-class burden ledger. Each excess dollar is assigned to one channel only, then translated into productive time.</p>
         <p class="decade-benchmark-note">The headline is the <b>current audited grand total</b> for the channels we can quantify without overlap. Housing and financing are carved out of the broad price-level burden rather than added on top. Property tax and sales-tax amplification are already embedded in parent channels and will be isolated separately without changing the total.</p>
       </div>
-      <div class="decade-benchmark-result">
-        <p class="result-kicker">CURRENT DE-DUPLICATED GRAND TOTAL</p>
-        <div class="decade-primary-grid">
-          <div class="decade-primary-metric"><div class="decade-main-value" id="decadeHours">—</div><div class="decade-main-label">productive hours</div></div>
-          <div class="decade-primary-metric"><div class="decade-main-value" id="decadeYears">—</div><div class="decade-main-label">productive years</div></div>
+
+      <div class="decade-summary-bar">
+        <div class="decade-summary-label">CURRENT DE-DUPLICATED GRAND TOTAL</div>
+        <div class="decade-summary-grid">
+          <div class="decade-summary-item hero"><div class="decade-main-value" id="decadeHours">—</div><div class="decade-main-label">productive hours</div></div>
+          <div class="decade-summary-item hero"><div class="decade-main-value" id="decadeYears">—</div><div class="decade-main-label">productive years</div></div>
+          <div class="decade-summary-item"><strong id="decadeDays">—</strong><span>8-hour workdays</span></div>
+          <div class="decade-summary-item"><strong id="decadeWeeks">—</strong><span>workweeks</span></div>
+          <div class="decade-summary-item"><strong id="decadeDollars">—</strong><span>grand-total burden dollars</span></div>
         </div>
-        <div class="decade-mini-grid">
-          <div class="decade-mini"><strong id="decadeDays">—</strong><span>8-hour workdays</span></div>
-          <div class="decade-mini"><strong id="decadeWeeks">—</strong><span>workweeks</span></div>
-          <div class="decade-mini"><strong id="decadeDollars">—</strong><span>grand-total burden dollars</span></div>
-        </div>
-        <div class="decade-channel-grid">
-          <div class="decade-channel included">
-            <div class="decade-channel-label">Federal tax + payroll excess</div>
-            <div class="decade-channel-value" id="decadeTaxChannel">—</div>
-            <div class="decade-channel-sub" id="decadeTaxSub">Only deterioration above the book's 2015 federal + payroll benchmark enters the total.</div>
-            <span class="decade-separate-tag">counted once</span>
-          </div>
-          <div class="decade-channel included">
-            <div class="decade-channel-label">General purchasing-power pressure</div>
-            <div class="decade-channel-value" id="decadePriceChannel">—</div>
-            <div class="decade-channel-sub" id="decadePriceSub">Broad consumer-price burden after removing the shelter allocation.</div>
-            <span class="decade-separate-tag">counted once</span>
-          </div>
-          <div class="decade-channel included">
-            <div class="decade-channel-label">Housing / shelter pressure</div>
-            <div class="decade-channel-value" id="decadeHousingChannel">—</div>
-            <div class="decade-channel-sub" id="decadeHousingSub">Shelter allocation after removing the mortgage-financing attribution.</div>
-            <span class="decade-separate-tag">counted once</span>
-          </div>
-          <div class="decade-channel included">
-            <div class="decade-channel-label">Mortgage financing pressure</div>
-            <div class="decade-channel-value" id="decadeFinancingChannel">—</div>
-            <div class="decade-channel-sub" id="decadeFinancingSub">Rate-only financing attribution carved out of shelter, not added on top.</div>
-            <span class="decade-separate-tag">counted once</span>
-          </div>
-          <div class="decade-channel">
-            <div class="decade-channel-label">Property tax</div>
-            <div class="decade-channel-value" id="decadePropertyChannel">Embedded in housing</div>
-            <div class="decade-channel-sub">Already inside the shelter channel. Next step is to isolate the property-tax share by province without changing the grand total.</div>
-            <span class="decade-separate-tag">embedded · isolate next</span>
-          </div>
-          <div class="decade-channel">
-            <div class="decade-channel-label">Sales-tax amplification</div>
-            <div class="decade-channel-value" id="decadeSalesTaxChannel">Embedded in prices</div>
-            <div class="decade-channel-sub">GST/HST/PST paid on higher nominal prices is already inside consumer-price pressure. It will be attributed separately, not added again.</div>
-            <span class="decade-separate-tag">embedded · isolate next</span>
-          </div>
-          <div class="decade-channel">
-            <div class="decade-channel-label">Public debt / fiscal claim</div>
-            <div class="decade-channel-value" id="decadePublicChannel">—</div>
-            <div class="decade-channel-sub" id="decadePublicSub">Economic-resource illustration only; not a direct household bill and therefore outside the grand total.</div>
-            <span class="decade-separate-tag">outside direct total</span>
-          </div>
-        </div>
-        <details>
-          <summary>SHOW DECADE MATH</summary>
-          <div id="decadeMath" class="math-detail">Calculate your household profile above to see the decade benchmark.</div>
-        </details>
       </div>
+
+      <div class="decade-channel-grid">
+        <div class="decade-channel included">
+          <div class="decade-channel-label">Federal tax + payroll excess</div>
+          <div class="decade-channel-value" id="decadeTaxChannel">—</div>
+          <div class="decade-channel-sub" id="decadeTaxSub">Only deterioration above the book's 2015 federal + payroll benchmark enters the total.</div>
+          <span class="decade-separate-tag">counted once</span>
+        </div>
+        <div class="decade-channel included">
+          <div class="decade-channel-label">General purchasing-power pressure</div>
+          <div class="decade-channel-value" id="decadePriceChannel">—</div>
+          <div class="decade-channel-sub" id="decadePriceSub">Broad consumer-price burden after removing the shelter allocation.</div>
+          <span class="decade-separate-tag">counted once</span>
+        </div>
+        <div class="decade-channel included">
+          <div class="decade-channel-label">Housing / shelter pressure</div>
+          <div class="decade-channel-value" id="decadeHousingChannel">—</div>
+          <div class="decade-channel-sub" id="decadeHousingSub">Shelter allocation after removing the mortgage-financing attribution.</div>
+          <span class="decade-separate-tag">counted once</span>
+        </div>
+        <div class="decade-channel included">
+          <div class="decade-channel-label">Mortgage financing pressure</div>
+          <div class="decade-channel-value" id="decadeFinancingChannel">—</div>
+          <div class="decade-channel-sub" id="decadeFinancingSub">Rate-only financing attribution carved out of shelter, not added on top.</div>
+          <span class="decade-separate-tag">counted once</span>
+        </div>
+        <div class="decade-channel">
+          <div class="decade-channel-label">Property tax</div>
+          <div class="decade-channel-value" id="decadePropertyChannel">Embedded in housing</div>
+          <div class="decade-channel-sub">Already inside the shelter channel. Next step is to isolate the property-tax share by province without changing the grand total.</div>
+          <span class="decade-separate-tag">embedded · isolate next</span>
+        </div>
+        <div class="decade-channel">
+          <div class="decade-channel-label">Sales-tax amplification</div>
+          <div class="decade-channel-value" id="decadeSalesTaxChannel">Embedded in prices</div>
+          <div class="decade-channel-sub">GST/HST/PST paid on higher nominal prices is already inside consumer-price pressure. It will be attributed separately, not added again.</div>
+          <span class="decade-separate-tag">embedded · isolate next</span>
+        </div>
+        <div class="decade-channel">
+          <div class="decade-channel-label">Public debt / fiscal claim</div>
+          <div class="decade-channel-value" id="decadePublicChannel">—</div>
+          <div class="decade-channel-sub" id="decadePublicSub">Economic-resource illustration only; not a direct household bill and therefore outside the grand total.</div>
+          <span class="decade-separate-tag">outside direct total</span>
+        </div>
+      </div>
+      <details>
+        <summary>SHOW DECADE MATH</summary>
+        <div id="decadeMath" class="math-detail">Calculate your household profile above to see the decade benchmark.</div>
+      </details>
     </div>
   </section>
 
