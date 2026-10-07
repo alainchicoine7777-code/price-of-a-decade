@@ -567,6 +567,43 @@ async def national_feed() -> dict[str, Any]:
     return {"items": items, "cached": False, "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
+class ContactRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    email: str = Field(min_length=5, max_length=200)
+    organization: str = Field(default="", max_length=160)
+    reason: str = Field(min_length=2, max_length=80)
+    subject: str = Field(min_length=2, max_length=180)
+    message: str = Field(min_length=10, max_length=5000)
+    website: str = Field(default="", max_length=200)
+
+
+CONTACT_EMAIL = "alain@priceofadecade.com"
+CONTACT_DELIVERY_ACTIVE = False
+_EMAIL_BASIC_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+@app.post("/api/contact")
+def contact_submit(req: ContactRequest) -> dict[str, Any]:
+    # Honeypot: accept bot submissions without processing them.
+    if req.website.strip():
+        return {"ok": True, "message": "Thank you."}
+
+    if not _EMAIL_BASIC_RE.match(req.email.strip()):
+        raise HTTPException(status_code=422, detail="Please enter a valid email address.")
+
+    if not CONTACT_DELIVERY_ACTIVE:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"The contact form is built and validated, but email delivery to {CONTACT_EMAIL} "
+                "is not active yet. Please try again once the project mailbox is online."
+            ),
+        )
+
+    # Delivery provider will be connected here once the project mailbox is operational.
+    raise HTTPException(status_code=503, detail="Email delivery is not configured yet.")
+
+
 @app.get("/static/site.css")
 def site_css() -> FileResponse:
     return FileResponse("site.css", media_type="text/css")
@@ -595,6 +632,12 @@ def health() -> dict[str, str]:
 @app.get("/", response_class=HTMLResponse)
 def home() -> HTMLResponse:
     with open("home.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+@app.get("/contact", response_class=HTMLResponse)
+def contact_page() -> HTMLResponse:
+    with open("contact.html", "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
 

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Contact — The Price of a Decade</title>
+  <meta name="description" content="Contact Alain Chicoine about The Price of a Decade, the Human Time Calculator, research, media, speaking, and related inquiries.">
+  <style>
+    :root{
+      --bg:#020912;
+      --bg2:#071522;
+      --panel:rgba(5,16,27,.94);
+      --panel2:rgba(8,24,39,.94);
+      --gold:#f0ad19;
+      --gold2:#ffd56a;
+      --ivory:#f5f0e6;
+      --soft:#c9d4df;
+      --muted:#91a0b0;
+      --line:rgba(240,173,25,.32);
+      --line2:rgba(255,255,255,.11);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ivory);font-family:Arial,Helvetica,sans-serif}
+    body{min-height:100vh;background:
+      radial-gradient(circle at 74% 10%,rgba(240,173,25,.08),transparent 24%),
+      radial-gradient(circle at 15% 0%,rgba(50,110,165,.17),transparent 30%),
+      linear-gradient(180deg,#071522 0%,#020912 58%,#01070d 100%)}
+    a{color:inherit;text-decoration:none}
+    .shell{width:min(1480px,calc(100% - 40px));margin:0 auto}
+    .topbar{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:24px}
+    .brand{font-family:Georgia,'Times New Roman',serif;letter-spacing:.08em;font-size:18px;white-space:nowrap}
+    .nav{display:flex;align-items:center;gap:30px;font-family:Georgia,'Times New Roman',serif;color:#e8e1d6}
+    .nav a{opacity:.88}.nav a:hover{opacity:1;color:var(--gold2)}
+    .nav .cta{font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:13px 20px;color:#07111a;background:linear-gradient(180deg,#ffd66d,#df9c17);border:1px solid rgba(255,225,166,.44);box-shadow:0 8px 22px rgba(223,156,23,.15)}
+    .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:
+      linear-gradient(90deg,rgba(2,9,18,.97) 0%,rgba(3,12,23,.90) 46%,rgba(2,8,15,.48) 72%,rgba(2,8,15,.80) 100%),
+      url('/static/home-hero-art.jpg?v=20261007-contact') center 37% / cover no-repeat}
+    .hero-inner{min-height:330px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:48px;align-items:center;padding:58px 0 54px}
+    .eyebrow{margin:0 0 12px;color:var(--gold2);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}
+    h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(52px,6vw,88px);line-height:.91;letter-spacing:-.03em}
+    h1 em{color:var(--gold2);font-weight:700}
+    .hero-copy{max-width:760px;margin:22px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.45;color:#e5e7e9}
+    .direct-card{justify-self:end;width:min(100%,390px);padding:26px 28px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(5,17,29,.95),rgba(2,10,18,.97));box-shadow:0 20px 50px rgba(0,0,0,.25)}
+    .direct-card .label{color:var(--gold2);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+    .direct-card .email{font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.15;margin:11px 0 8px;word-break:break-word}
+    .direct-card p{margin:0;color:var(--soft);font-size:14px;line-height:1.5}
+    .main-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);gap:28px;padding:34px 0 48px}
+    .panel{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:0 18px 44px rgba(0,0,0,.23)}
+    .form-panel{padding:32px}
+    .panel-kicker{margin:0 0 8px;color:var(--gold2);font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}
+    .form-panel h2,.side-card h2{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.05}
+    .form-intro{max-width:720px;color:var(--soft);line-height:1.55;margin:12px 0 26px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    label{display:block;color:#f4efe6;font-size:13px;font-weight:700;letter-spacing:.01em}
+    label span.optional{font-weight:400;color:var(--muted)}
+    input,select,textarea{width:100%;margin-top:8px;border:1px solid rgba(155,175,197,.28);background:#04101b;color:var(--ivory);font:inherit;font-size:16px;padding:14px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
+    input:focus,select:focus,textarea:focus{border-color:rgba(255,213,106,.7);box-shadow:0 0 0 3px rgba(240,173,25,.09)}
+    textarea{min-height:190px;resize:vertical;line-height:1.45}
+    .full{grid-column:1/-1}
+    .honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+    .form-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:22px}
+    button{min-height:48px;border:1px solid rgba(255,223,159,.45);background:linear-gradient(180deg,#ffd56a,#df9c17);color:#07111a;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 24px;cursor:pointer}
+    button:disabled{opacity:.55;cursor:wait}
+    .form-note{color:var(--muted);font-size:12px;line-height:1.4}
+    .status{display:none;margin-top:18px;padding:14px 16px;border:1px solid var(--line2);background:rgba(255,255,255,.025);color:var(--soft);line-height:1.45}
+    .status.show{display:block}.status.error{border-color:rgba(240,173,25,.48);color:#f3d89c}
+    .side{display:grid;gap:18px;align-content:start}
+    .side-card{padding:26px}
+    .side-card p{color:var(--soft);line-height:1.55;margin:12px 0 0}
+    .reasons{display:grid;gap:0;margin-top:16px;border-top:1px solid var(--line2)}
+    .reason{display:grid;grid-template-columns:48px 1fr;gap:14px;padding:15px 0;border-bottom:1px solid var(--line2);align-items:start}
+    .reason .num{color:var(--gold2);font-family:Georgia,'Times New Roman',serif;font-size:21px}
+    .reason strong{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+    .reason span{display:block;color:var(--muted);font-size:13px;line-height:1.4}
+    .book-strip{display:grid;grid-template-columns:115px 1fr;gap:20px;align-items:center}
+    .book-strip img{display:block;width:100%;height:auto;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+    .book-strip p{margin:7px 0 0}
+    .book-strip a{display:inline-block;margin-top:12px;color:var(--gold2);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    footer{border-top:1px solid var(--line);padding:20px 0 28px;color:var(--muted);font-size:12px}
+    .footer-row{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+    @media(max-width:900px){
+      .nav{gap:16px}.nav a:not(.cta){display:none}
+      .hero-inner{grid-template-columns:1fr;gap:26px}.direct-card{justify-self:start}
+      .main-grid{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.book-strip{grid-template-columns:95px 1fr}
+    }
+    @media(max-width:620px){
+      .shell{width:min(100% - 28px,1480px)}
+      .topbar{height:64px}.brand{font-size:14px}.nav .cta{padding:11px 13px;font-size:11px}
+      .hero-inner{padding:42px 0 38px}.hero-copy{font-size:17px}.direct-card{padding:22px;width:100%}.direct-card .email{font-size:22px}
+      .main-grid{padding-top:22px}.form-panel{padding:22px}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.side{grid-template-columns:1fr}.form-panel h2,.side-card h2{font-size:30px}
+    }
+  </style>
+</head>
+<body>
+  <header class="shell topbar">
+    <a class="brand" href="/">THE PRICE OF A DECADE</a>
+    <nav class="nav" aria-label="Primary">
+      <a href="/">The Book</a>
+      <a href="/calculator">The Calculator</a>
+      <a href="/contact" aria-current="page">Contact</a>
+      <a class="cta" href="/">GET THE BOOK →</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="shell hero-inner">
+      <div>
+        <p class="eyebrow">CONTACT · THE PRICE OF A DECADE</p>
+        <h1>START A<br><em>CONVERSATION.</em></h1>
+        <p class="hero-copy">Book inquiries, media, speaking, research, the Human Time Calculator, or the broader Price of a Decade project.</p>
+      </div>
+      <aside class="direct-card">
+        <div class="label">Direct email</div>
+        <div class="email">alain@priceofadecade.com</div>
+        <p>This address has been reserved for the project. Email delivery is being activated; the contact form below is already built and ready to connect.</p>
+      </aside>
+    </div>
+  </section>
+
+  <main class="shell main-grid">
+    <section class="panel form-panel">
+      <p class="panel-kicker">SEND A MESSAGE</p>
+      <h2>Contact Alain Chicoine</h2>
+      <p class="form-intro">Use the form below to provide enough context to route your message efficiently. The form is live for validation and testing; actual email delivery will be enabled once the project mailbox is operational.</p>
+
+      <form id="contactForm" novalidate>
+        <div class="form-grid">
+          <label>Full name
+            <input name="name" autocomplete="name" maxlength="120" required>
+          </label>
+          <label>Email address
+            <input name="email" type="email" autocomplete="email" maxlength="200" required>
+          </label>
+          <label>Organization <span class="optional">(optional)</span>
+            <input name="organization" autocomplete="organization" maxlength="160">
+          </label>
+          <label>Reason for contact
+            <select name="reason" required>
+              <option value="">Choose one</option>
+              <option>Book inquiry</option>
+              <option>Media / interview</option>
+              <option>Speaking / event</option>
+              <option>Research / data</option>
+              <option>Human Time Calculator</option>
+              <option>Partnership / collaboration</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="full">Subject
+            <input name="subject" maxlength="180" required>
+          </label>
+          <label class="full">Message
+            <textarea name="message" maxlength="5000" required></textarea>
+          </label>
+          <label class="honeypot" aria-hidden="true">Leave this field blank
+            <input name="website" tabindex="-1" autocomplete="off">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button id="submitBtn" type="submit">SEND MESSAGE →</button>
+          <span class="form-note">Delivery will be connected to alain@priceofadecade.com once the mailbox is operational.</span>
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <aside class="side">
+      <section class="panel side-card">
+        <p class="panel-kicker">GOOD REASONS TO REACH OUT</p>
+        <h2>What this inbox is for.</h2>
+        <div class="reasons">
+          <div class="reason"><div class="num">01</div><div><strong>Book & media</strong><span>Interviews, reviews, publishing, press and editorial inquiries.</span></div></div>
+          <div class="reason"><div class="num">02</div><div><strong>Speaking & events</strong><span>Presentations, panels, podcasts and discussions about the book’s framework.</span></div></div>
+          <div class="reason"><div class="num">03</div><div><strong>Research & methodology</strong><span>Questions about the data, assumptions, sources and Human Time framework.</span></div></div>
+          <div class="reason"><div class="num">04</div><div><strong>Calculator & project</strong><span>Feedback on the Human Time Calculator and the broader Price of a Decade project.</span></div></div>
+        </div>
+      </section>
+
+      <section class="panel side-card book-strip">
+        <img src="/static/book-cover.png?v=20261007-contact" alt="The Price of a Decade book cover">
+        <div>
+          <p class="panel-kicker">THE BOOK</p>
+          <h2 style="font-size:28px">The Price of a Decade</h2>
+          <p>Time is the currency. Money is only the accounting layer.</p>
+          <a href="/calculator">OPEN THE HUMAN TIME CALCULATOR →</a>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="shell footer-row">
+      <span>© 2026 Alain Chicoine · The Price of a Decade</span>
+      <span>PriceOfADecade.com · alain@priceofadecade.com</span>
+    </div>
+  </footer>
+
+  <script>
+    (()=>{
+      const form=document.getElementById('contactForm');
+      const status=document.getElementById('status');
+      const btn=document.getElementById('submitBtn');
+      form.addEventListener('submit',async(e)=>{
+        e.preventDefault();
+        status.className='status';
+        status.textContent='';
+        if(!form.reportValidity()) return;
+        const data=Object.fromEntries(new FormData(form).entries());
+        btn.disabled=true;
+        btn.textContent='CHECKING…';
+        try{
+          const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+          const payload=await r.json().catch(()=>({}));
+          if(r.ok){
+            status.className='status show';
+            status.textContent=payload.message||'Message received.';
+            form.reset();
+          }else{
+            status.className='status show error';
+            status.textContent=payload.detail||payload.message||'The form is ready, but email delivery is not active yet.';
+          }
+        }catch(err){
+          status.className='status show error';
+          status.textContent='The form is ready, but email delivery is not active yet.';
+        }finally{
+          btn.disabled=false;
+          btn.textContent='SEND MESSAGE →';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
