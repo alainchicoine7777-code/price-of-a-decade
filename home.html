@@ -1,170 +1,285 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Price of a Decade — Alain Chicoine</title>
-  <meta name="description" content="Time is the currency. Money is only the accounting layer. Explore the Human Time Calculator from The Price of a Decade.">
-  <link rel="stylesheet" href="/static/site.css">
-
-  <style id="theme-override">
+  <meta name="description" content="The Price of a Decade examines how policy, inflation, debt and declining purchasing power changed the economic bargain for Canada's middle class — and translates those changes into human time.">
+  <style>
     :root{
-      --theme-bg-0:#030a12;
-      --theme-bg-1:#07111c;
-      --theme-bg-2:#0a2035;
-      --theme-panel-1:rgba(8,21,35,.94);
-      --theme-panel-2:rgba(5,14,24,.97);
-      --theme-line:rgba(255,255,255,.10);
-      --theme-line-strong:rgba(214,165,79,.34);
-      --theme-gold:#d6a54d;
-      --theme-gold-bright:#f1cf83;
-      --theme-gold-deep:#b9852f;
-      --theme-text:#f2ede2;
-      --theme-soft:#c8d3df;
-      --theme-muted:#9eabbe;
-      --theme-shadow:0 18px 40px rgba(0,0,0,.26);
+      --bg:#04101a;
+      --bg2:#071827;
+      --panel:#071523;
+      --panel2:#0a1b2d;
+      --gold:#f0ad19;
+      --gold2:#ffcf66;
+      --ivory:#f5f0e6;
+      --text:#e8edf2;
+      --muted:#aeb9c7;
+      --line:rgba(240,173,25,.38);
+      --line-soft:rgba(255,255,255,.11);
+      --shadow:0 22px 55px rgba(0,0,0,.42);
+      --max:1480px;
     }
-    html{color-scheme:dark}
-    body.site-body{
-      background:
-        radial-gradient(circle at 82% 12%, rgba(214,165,79,.10), transparent 20%),
-        radial-gradient(circle at 18% 0%, rgba(67,132,195,.16), transparent 26%),
-        linear-gradient(90deg, var(--theme-bg-0) 0%, var(--theme-bg-1) 28%, var(--theme-bg-2) 50%, var(--theme-bg-1) 72%, var(--theme-bg-0) 100%);
-      color:var(--theme-text);
-    }
-    .topbar, footer{
-      background:linear-gradient(90deg, rgba(4,11,19,.96), rgba(8,26,44,.92) 50%, rgba(4,11,19,.96));
-      border-color:var(--theme-line-strong)!important;
-      box-shadow:0 1px 0 rgba(255,255,255,.03) inset;
-    }
-    .brand, .navlink, .navtag, h1, h2, h3, strong, summary{color:var(--theme-text)}
-    .calc-intro h1 em,
-    .public-money-header h2 em,
-    .decade-benchmark h2 em,
-    .hero h1 em,
-    .thesis,
-    .eyebrow,
-    .section-label,
-    .public-manual-label,
-    .comparison-head,
-    .decade-summary-label,
-    .decade-channel-label,
-    .result-kicker,
-    details summary,
-    .feed-source,
-    .commitment-kind{
-      color:var(--theme-gold-bright)!important;
-    }
-    .calc-intro p,
-    .public-money-header p,
-    .method-note,
-    .decade-benchmark-copy p,
-    .comparison-note,
-    .comparison-meta,
-    .feed-date,
-    .result-source,
-    .public-manual-status,
-    small,
-    .unit,
-    footer span,
-    .subtitle{color:var(--theme-soft)!important}
-    .panel,
-    .feed-column,
-    .feed-item,
-    .commitment-item,
-    .comparison-row,
-    .decade-summary-bar,
-    .decade-channel,
-    .comparison-summary,
-    .hero{
-      background:linear-gradient(180deg, var(--theme-panel-1), var(--theme-panel-2));
-      border-color:var(--theme-line-strong)!important;
-      box-shadow:var(--theme-shadow);
-    }
-    .topbar a, .topbar span{letter-spacing:.04em}
-    .gold-button,
-    button.gold-button,
-    .comparison-reset{
-      background:linear-gradient(180deg, var(--theme-gold) 0%, var(--theme-gold-deep) 100%);
-      color:#0a1017!important;
-      border:1px solid rgba(255,226,171,.34)!important;
-      box-shadow:0 8px 22px rgba(185,133,47,.22);
-    }
-    .ghost-button,
-    .translate-commitment,
-    .mode{
-      background:linear-gradient(180deg, rgba(7,20,33,.88), rgba(5,13,22,.96));
-      color:var(--theme-gold-bright)!important;
-      border:1px solid rgba(214,165,79,.46)!important;
-    }
-    .mode.active{
-      background:linear-gradient(180deg, rgba(214,165,79,.16), rgba(214,165,79,.06));
-      color:var(--theme-gold-bright)!important;
-      border-color:rgba(241,207,131,.55)!important;
-      box-shadow:0 0 0 1px rgba(214,165,79,.15) inset;
-    }
-    input, select, textarea,
-    .money,
-    .public-money-input,
-    .comparison-income-editor input{
-      background:rgba(2,10,18,.92)!important;
-      color:var(--theme-text)!important;
-      border-color:rgba(151,170,194,.24)!important;
-    }
-    input::placeholder, textarea::placeholder{color:var(--theme-muted)}
-    .money span{color:var(--theme-gold-bright)!important}
-    .rule,
-    .public-money-header,
-    .section-label,
-    .decade-benchmark-copy,
-    .feed-item,
-    .commitment-item{border-color:var(--theme-line)!important}
-    .big-value,
-    #htv,
-    #hoursResult,
-    .time-stack strong,
-    .decade-main-value,
-    .decade-summary-item strong,
-    .decade-channel-value,
-    .comparison-time strong,
-    .commitment-amount{
-      color:var(--theme-gold-bright)!important;
-      text-shadow:0 0 16px rgba(214,165,79,.08);
-    }
-    .comparison-bar-label,
-    .decade-main-label,
-    .decade-summary-item span,
-    .decade-channel-sub,
-    .decade-separate-tag,
-    .comparison-profile label,
-    .comparison-profile small,
-    .commitment-result,
-    .feed-loading{color:var(--theme-soft)!important}
-    .decade-summary-item,
-    .decade-channel,
-    .commitment-result,
-    .decade-separate-tag,
-    .comparison-visual,
-    .comparison-summary{
-      background:rgba(255,255,255,.02);
-      border-color:var(--theme-line)!important;
-    }
-    .burden-track{background:rgba(255,255,255,.08)!important}
-    .burden-fill{background:linear-gradient(90deg, var(--theme-gold-bright), var(--theme-gold))!important}
-    .clockmark{border-color:rgba(214,165,79,.2)!important}
-    .clockmark span{border-color:rgba(214,165,79,.45)!important}
-    a{color:var(--theme-text)}
-  </style>
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;background:var(--bg)}
+    body{margin:0;background:linear-gradient(180deg,#030a11 0%,#061522 48%,#030b12 100%);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .serif{font-family:Georgia,'Times New Roman',serif}
+    .wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
 
+    .site-header{position:sticky;top:0;z-index:20;background:rgba(3,10,17,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .header-inner{height:70px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{font-family:Georgia,'Times New Roman',serif;font-size:20px;letter-spacing:.05em;white-space:nowrap}
+    .nav{display:flex;align-items:center;gap:28px;font-family:Georgia,'Times New Roman',serif;font-size:16px}
+    .nav a{opacity:.9}
+    .nav a:hover{color:var(--gold2)}
+    .header-cta{font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:14px;letter-spacing:.06em;color:#07101a;background:linear-gradient(180deg,#ffd66f 0%,#d99811 100%);padding:14px 22px;border:1px solid rgba(255,236,179,.55);box-shadow:0 8px 24px rgba(218,150,15,.23)}
+
+    .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:#06111c}
+    .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(3,9,16,.95) 0%,rgba(3,9,16,.77) 30%,rgba(3,9,16,.08) 60%,rgba(4,10,16,.20) 100%),url('/static/home-hero-art.jpg');background-size:cover;background-position:center 55%;filter:saturate(1.06) brightness(1.08)}
+    .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 62% 43%,rgba(255,217,112,.34) 0%,rgba(255,192,61,.12) 18%,transparent 43%),linear-gradient(180deg,rgba(4,10,16,.08),rgba(3,9,15,.34));pointer-events:none}
+    .hero-inner{position:relative;z-index:2;min-height:720px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(520px,.95fr);align-items:center;gap:36px;padding-top:48px;padding-bottom:48px}
+    .hero-copy{max-width:690px}
+    .eyebrow{color:var(--gold2);font-size:13px;font-weight:800;letter-spacing:.20em;text-transform:uppercase;margin:0 0 18px}
+    .hero h1{font-family:Georgia,'Times New Roman',serif;font-size:clamp(54px,6.3vw,96px);line-height:.92;letter-spacing:-.035em;margin:0 0 26px;color:var(--ivory);text-shadow:0 2px 18px rgba(0,0,0,.4)}
+    .hero h1 em{color:var(--gold);font-weight:700}
+    .hero-lead{font-family:Georgia,'Times New Roman',serif;font-size:clamp(20px,1.75vw,29px);line-height:1.35;max-width:670px;color:#f0eee9;text-shadow:0 2px 12px rgba(0,0,0,.46)}
+    .tagline{font-family:Georgia,'Times New Roman',serif;color:var(--gold2);font-style:italic;font-size:18px;margin:24px 0 30px}
+    .hero-actions{display:flex;flex-wrap:wrap;gap:16px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:52px;padding:0 22px;border:1px solid var(--line);font-size:14px;font-weight:800;letter-spacing:.035em;text-transform:uppercase;transition:.2s ease}
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(180deg,#ffd66c,#df9d17);color:#08111a;border-color:rgba(255,228,154,.7);box-shadow:0 10px 28px rgba(207,137,10,.25)}
+    .btn-secondary{background:rgba(3,10,17,.6);color:var(--ivory);border-color:rgba(240,173,25,.75)}
+
+    .hero-visual{position:relative;display:grid;grid-template-columns:minmax(330px,430px) 1fr;align-items:center;gap:28px;justify-content:end}
+    .book-glow{position:absolute;left:3%;top:8%;width:62%;height:82%;background:radial-gradient(circle,rgba(255,223,137,.38),rgba(255,170,0,.12) 34%,transparent 70%);filter:blur(20px);pointer-events:none}
+    .book-shell{position:relative;z-index:2;justify-self:center;filter:drop-shadow(0 28px 28px rgba(0,0,0,.48)) drop-shadow(0 0 24px rgba(255,197,79,.24))}
+    .book-cover{display:block;width:min(100%,405px);height:auto;max-height:605px;object-fit:contain;transform:perspective(1100px) rotateY(-4deg);transform-origin:center;border:1px solid rgba(255,210,103,.28)}
+    .hero-keywords{position:relative;z-index:2;align-self:center;padding-left:4px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+    .hero-keywords .word{display:block;font-size:14px;letter-spacing:.24em;font-weight:800;margin:0 0 11px}
+    .hero-keywords .mini-line{width:48px;height:2px;background:var(--gold);margin:18px 0}
+    .hero-keywords .statement{font-size:15px;line-height:1.5;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:var(--ivory)}
+
+    .feature-strip{background:linear-gradient(180deg,#071521,#06111b);border-bottom:1px solid var(--line)}
+    .feature-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+    .feature{display:grid;grid-template-columns:52px 1fr;gap:18px;padding:28px 24px;border-right:1px solid var(--line-soft)}
+    .feature:last-child{border-right:0}
+    .icon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;color:var(--gold);border-radius:50%}
+    .icon svg{width:38px;height:38px;stroke:currentColor;fill:none;stroke-width:1.7}
+    .feature h3{font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin:2px 0 8px;color:var(--ivory)}
+    .feature p{margin:0;color:var(--muted);font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.35}
+
+    .section{border-bottom:1px solid var(--line);background:radial-gradient(circle at 50% 0%,rgba(21,64,96,.14),transparent 48%),linear-gradient(180deg,#05111b,#061522)}
+    .calculator-section{display:grid;grid-template-columns:.95fr 1.18fr .78fr;gap:34px;align-items:center;padding-top:42px;padding-bottom:42px}
+    .section-title{font-family:Georgia,'Times New Roman',serif;font-size:44px;line-height:.95;margin:0 0 18px;color:var(--ivory)}
+    .section-title em{color:var(--gold)}
+    .section-copy{font-family:Georgia,'Times New Roman',serif;color:#e3e7eb;font-size:18px;line-height:1.42;margin:0 0 22px}
+    .calculator-card{border:1px solid rgba(147,182,210,.35);background:linear-gradient(180deg,rgba(8,25,40,.94),rgba(4,15,25,.98));box-shadow:var(--shadow);padding:18px 20px 20px;min-height:230px}
+    .card-title{font-family:Georgia,'Times New Roman',serif;font-size:21px;margin:0 0 12px}
+    .tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(255,255,255,.06);margin-bottom:20px}
+    .tab{padding:11px 8px;text-align:center;background:#0d2233;color:#d4dce4;font-size:12px;font-weight:800;letter-spacing:.06em}
+    .tab.active{background:linear-gradient(180deg,#ffd05b,#dda01a);color:#09111a}
+    .teaser-value{font-family:Georgia,'Times New Roman',serif;color:var(--gold2);font-size:48px;line-height:1;margin:4px 0 8px}
+    .teaser-text{font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.25;color:#eef0f2}
+    .teaser-note{font-size:12px;color:#92a1b0;margin-top:14px}
+    .quote{border-left:1px solid var(--line);padding-left:28px;font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.35;color:var(--gold2);font-style:italic}
+    .quote cite{display:block;margin-top:20px;color:#f4f0e7;font-family:Arial,Helvetica,sans-serif;font-style:normal;font-size:13px;font-weight:800;letter-spacing:.22em}
+
+    .about-section{display:grid;grid-template-columns:300px 1.45fr .65fr .65fr .65fr;gap:28px;align-items:center;padding-top:38px;padding-bottom:38px}
+    .portrait-wrap{align-self:end;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;min-height:265px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.08),transparent 70%)}
+    .portrait{display:block;width:auto;height:auto;max-width:100%;max-height:295px;object-fit:contain;object-position:center bottom;filter:saturate(.88) contrast(1.03)}
+    .about-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:35px;line-height:1.05;margin:0 0 14px}
+    .about-copy p{font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.42;color:#dce2e8;margin:0 0 20px}
+    .mini-feature{min-height:170px;border-left:1px solid var(--line);padding:12px 0 0 24px;text-align:center}
+    .mini-feature .icon{margin:0 auto 12px}
+    .mini-feature h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px}
+    .mini-feature p{font-family:Georgia,'Times New Roman',serif;color:#cbd4dd;font-size:15px;line-height:1.35;margin:0}
+
+    .book-pitch{padding-top:50px;padding-bottom:50px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+    .book-pitch h2{font-family:Georgia,'Times New Roman',serif;font-size:48px;line-height:1.02;margin:0 0 18px}
+    .book-pitch p{font-family:Georgia,'Times New Roman',serif;color:#dbe2e8;font-size:18px;line-height:1.52;margin:0 0 18px}
+    .theme-list{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .theme-item{padding:18px;border:1px solid var(--line-soft);background:rgba(255,255,255,.02)}
+    .theme-item strong{display:block;color:var(--gold2);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+    .theme-item span{font-family:Georgia,'Times New Roman',serif;color:#d5dde5;font-size:15px;line-height:1.35}
+
+    footer{background:#02080d;border-top:1px solid var(--line);color:#cbd4dc}
+    .footer-inner{min-height:76px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;font-family:Georgia,'Times New Roman',serif;font-size:14px}
+    .footer-inner .right{text-align:right}
+
+    @media(max-width:1180px){
+      .nav{display:none}
+      .hero-inner{grid-template-columns:1fr;min-height:auto;padding-top:70px}
+      .hero-visual{grid-template-columns:minmax(280px,420px) minmax(180px,1fr);justify-content:start}
+      .feature-grid{grid-template-columns:1fr 1fr}
+      .feature:nth-child(2){border-right:0}
+      .feature:nth-child(-n+2){border-bottom:1px solid var(--line-soft)}
+      .calculator-section{grid-template-columns:1fr 1fr}
+      .quote{grid-column:1/-1}
+      .about-section{grid-template-columns:240px 1fr 1fr 1fr}
+      .about-copy{grid-column:2/-1}
+      .mini-feature{border-top:1px solid var(--line);border-left:0;padding-top:22px}
+    }
+    @media(max-width:760px){
+      .wrap{padding:0 18px}
+      .brand{font-size:16px}
+      .header-cta{padding:12px 14px;font-size:12px}
+      .hero::before{background-position:66% 52%}
+      .hero-inner{padding-top:44px;padding-bottom:38px}
+      .hero h1{font-size:56px}
+      .hero-lead{font-size:19px}
+      .hero-visual{grid-template-columns:1fr;justify-items:center}
+      .hero-keywords{display:none}
+      .book-cover{max-height:510px;width:auto;max-width:92%}
+      .feature-grid{grid-template-columns:1fr}
+      .feature{border-right:0;border-bottom:1px solid var(--line-soft)}
+      .calculator-section{grid-template-columns:1fr}
+      .about-section{grid-template-columns:1fr}
+      .portrait-wrap{min-height:0}
+      .portrait{max-height:320px}
+      .about-copy{grid-column:auto}
+      .mini-feature{border-left:0;border-top:1px solid var(--line);padding-left:0}
+      .book-pitch{grid-template-columns:1fr}
+      .theme-list{grid-template-columns:1fr}
+      .footer-inner{grid-template-columns:1fr;text-align:center;padding:22px 0}
+      .footer-inner .right{text-align:center}
+    }
+  </style>
 </head>
-<body class="site-body">
-<header class="topbar"><a class="brand" href="/">THE PRICE OF A DECADE</a><a class="navlink" href="/calculator">Human Time Calculator</a></header>
-<main class="hero">
-  <div class="clockmark" aria-hidden="true"><span></span></div>
-  <p class="eyebrow">ALAIN CHICOINE</p>
-  <h1>THE PRICE<br>OF A <em>DECADE</em></h1>
-  <p class="subtitle">How Policy, Inflation, Debt and Economic Discretion Changed the Canadian Bargain</p>
-  <p class="thesis">Time is the currency. Money is only the accounting layer.</p>
-  <a class="gold-button" href="/calculator">OPEN THE HUMAN TIME CALCULATOR</a>
-</main>
-<footer><span>Time is the currency. Money is only the accounting layer.</span><span>© 2026 Alain Chicoine</span></footer>
-</body></html>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/">THE PRICE OF A DECADE</a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#book">The Book</a>
+        <a href="/calculator">The Calculator</a>
+        <a href="#themes">Insights</a>
+        <a href="#author">About</a>
+        <a href="#footer">Contact</a>
+      </nav>
+      <a class="header-cta" href="#book">GET THE BOOK →</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">ALAIN CHICOINE · 2015–2025</p>
+          <h1>What Did the<br>Last Decade<br><em>Cost You?</em></h1>
+          <p class="hero-lead">How policy, inflation, debt and declining purchasing power changed the economic bargain for Canada’s middle class — and what it means for your time, your life, and what comes next.</p>
+          <p class="tagline">Time is the currency. Money is only the accounting layer.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/calculator">▦ &nbsp; OPEN THE HUMAN TIME CALCULATOR →</a>
+            <a class="btn btn-secondary" href="#book">▣ &nbsp; GET THE BOOK →</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="The Price of a Decade book artwork">
+          <div class="book-glow"></div>
+          <div class="book-shell">
+            <img class="book-cover" src="/static/book-cover.png" alt="The Price of a Decade book cover by Alain Chicoine">
+          </div>
+          <div class="hero-keywords">
+            <span class="word">PEOPLE</span>
+            <span class="word">POLICY</span>
+            <span class="word">INFLATION</span>
+            <span class="word">DEBT</span>
+            <span class="word">PROSPERITY</span>
+            <span class="word">TIME</span>
+            <div class="mini-line"></div>
+            <div class="statement">A clearer<br>Canada for<br>what comes next.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature-strip">
+      <div class="wrap feature-grid">
+        <article class="feature">
+          <div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 39V24h7v15M20 39V16h7v23M33 39V8h7v31M4 39h40"/></svg></div>
+          <div><h3>Evidence-Based Analysis</h3><p>Real data. Clear insights. A Canadian perspective.</p></div>
+        </article>
+        <article class="feature">
+          <div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5l3 8 7-3-2 8 8 2-7 5 4 7-9-1-4 9-4-9-9 1 4-7-7-5 8-2-2-8 7 3z"/></svg></div>
+          <div><h3>A Broader Perspective</h3><p>Beyond dollars and percentages to what really matters.</p></div>
+        </article>
+        <article class="feature">
+          <div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="18"/><path d="M24 13v12l9 5"/></svg></div>
+          <div><h3>Real Costs in Human Time</h3><p>See what policy changes actually cost you.</p></div>
+        </article>
+        <article class="feature">
+          <div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="18" cy="17" r="7"/><circle cx="31" cy="19" r="6"/><path d="M6 40c1-9 7-14 12-14s11 5 12 14M26 28c7-1 13 4 15 12"/></svg></div>
+          <div><h3>Built for a Stronger Canada</h3><p>Insights for a more prosperous future.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="calculator-preview">
+      <div class="wrap calculator-section">
+        <div>
+          <h2 class="section-title">The Human Time<br><em>Calculator</em></h2>
+          <p class="section-copy">Translate dollars into something real — your time. See what public spending, taxes, debt and economic pressure mean in productive hours, workdays and working years.</p>
+          <a class="btn btn-primary" href="/calculator">OPEN THE CALCULATOR →</a>
+        </div>
+        <div class="calculator-card" aria-label="Human Time Calculator preview">
+          <p class="card-title">Your Human Time</p>
+          <div class="tabs">
+            <div class="tab active">INFLATION</div><div class="tab">TAXES</div><div class="tab">DEBT</div><div class="tab">HOUSING</div><div class="tab">TOTAL</div>
+          </div>
+          <div class="teaser-value">SEE YOURS</div>
+          <div class="teaser-text">Use your province, income, working hours and household profile to translate economic costs into time.</div>
+          <div class="teaser-note">The live calculator uses your inputs and the project’s locked calculation framework.</div>
+        </div>
+        <blockquote class="quote">“When you measure policy in human time, the trade-offs become impossible to ignore.”<cite>ALAIN CHICOINE</cite></blockquote>
+      </div>
+    </section>
+
+    <section class="section" id="author">
+      <div class="wrap about-section">
+        <div class="portrait-wrap"><img class="portrait" src="/static/alain-chicoine.png" alt="Alain Chicoine"></div>
+        <div class="about-copy">
+          <h2>A Decade of Change.<br>A Lifetime of Consequences.</h2>
+          <p><em>The Price of a Decade</em> examines how policy decisions, inflation, debt and declining purchasing power reshaped the lives of Canadians. It goes beyond dollars and percentages to reveal the real cost — the time you could have spent living, working, building and dreaming.</p>
+          <a class="btn btn-secondary" href="#book">LEARN MORE ABOUT THE BOOK →</a>
+        </div>
+        <div class="mini-feature"><div class="icon"><svg viewBox="0 0 48 48"><rect x="12" y="7" width="24" height="34" rx="2"/><path d="M18 16h12M18 23h12M18 30h9"/></svg></div><h4>Clear Explanations</h4><p>Complex issues, plain language.</p></div>
+        <div class="mini-feature"><div class="icon"><svg viewBox="0 0 48 48"><path d="M8 36l9-10 8 5 14-18M31 13h8v8"/></svg></div><h4>Real-World Impact</h4><p>From policy to your daily life.</p></div>
+        <div class="mini-feature"><div class="icon"><svg viewBox="0 0 48 48"><circle cx="18" cy="17" r="7"/><circle cx="31" cy="19" r="6"/><path d="M6 40c1-9 7-14 12-14s11 5 12 14M26 28c7-1 13 4 15 12"/></svg></div><h4>A Stronger Canada</h4><p>Insights for a more prosperous future.</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="book">
+      <div class="wrap book-pitch">
+        <div>
+          <p class="eyebrow">THE BOOK</p>
+          <h2>What did the last decade really cost the middle class?</h2>
+          <p>The economic bargain changed. Inflation eroded purchasing power. Debt expanded. Housing moved further out of reach. The book measures those changes not only in dollars, but in productive life and economic freedom.</p>
+          <p><strong style="color:var(--gold2)">Money is stored time.</strong> That is the central idea connecting the book, the calculator and the broader project.</p>
+          <a class="btn btn-primary" href="#book" aria-label="Get The Price of a Decade">GET THE BOOK →</a>
+        </div>
+        <div id="themes">
+          <p class="eyebrow">KEY THEMES</p>
+          <div class="theme-list">
+            <div class="theme-item"><strong>Housing Out of Reach</strong><span>What rising housing costs mean in years of productive life.</span></div>
+            <div class="theme-item"><strong>Debt as the New Normal</strong><span>How leverage reshapes risk, resilience and future choices.</span></div>
+            <div class="theme-item"><strong>The Inflation Tax</strong><span>How persistent price increases quietly consume purchasing power.</span></div>
+            <div class="theme-item"><strong>The Tax and Spend Cycle</strong><span>How larger claims on income affect economic discretion.</span></div>
+            <div class="theme-item"><strong>The Hours-of-Life Framework</strong><span>A way to measure the cost of policy using the one asset we cannot create more of: time.</span></div>
+            <div class="theme-item"><strong>Human Directed. AI Amplified.</strong><span>The project visibly uses the productivity model it argues for.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div class="wrap footer-inner">
+      <div>THE PRICE OF A DECADE</div>
+      <div>Time is the currency. Money is only the accounting layer.</div>
+      <div class="right">© 2026 Alain Chicoine</div>
+    </div>
+  </footer>
+</body>
+</html>
