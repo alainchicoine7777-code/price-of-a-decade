@@ -572,6 +572,21 @@ def site_css() -> FileResponse:
     return FileResponse("site.css", media_type="text/css")
 
 
+@app.get("/static/book-cover.png")
+def book_cover_image() -> FileResponse:
+    return FileResponse("book-cover.png", media_type="image/png")
+
+
+@app.get("/static/alain-chicoine.png")
+def alain_chicoine_image() -> FileResponse:
+    return FileResponse("alain-chicoine.png", media_type="image/png")
+
+
+@app.get("/static/home-hero-art.jpg")
+def home_hero_art_image() -> FileResponse:
+    return FileResponse("home-hero-art.jpg", media_type="image/jpeg")
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
